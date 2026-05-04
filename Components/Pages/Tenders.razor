@@ -1,5 +1,6 @@
 ﻿@page "/tenders"
 @rendermode InteractiveServer
+@using System.Net.Http
 @inject HttpClient Http
 
 <h3>📜 Лента госзакупок (RSS)</h3>
@@ -14,7 +15,7 @@
 else if (!string.IsNullOrEmpty(ErrorMessage))
 {
     <div class="alert alert-danger">❌ @ErrorMessage</div>
-    <button class="btn btn-outline-secondary btn-sm" @onclick="LoadFeed"> Попробовать снова</button>
+    <button class="btn btn-outline-secondary btn-sm" @onclick="LoadFeed">🔄 Попробовать снова</button>
 }
 else if (Items?.Any() == true)
 {
@@ -48,7 +49,7 @@ else
     public bool IsLoading { get; set; }
     public string ErrorMessage { get; set; } = string.Empty;
 
-    // 👇 Замени на актуальную ссылку RSS, если нужно
+    // 👇 Ссылка на RSS госзакупок
     private const string RssUrl = "https://zakupki.gov.ru/epz/order/extendedsearch/rss.html";
 
     protected override async Task OnInitializedAsync()
@@ -65,7 +66,21 @@ else
 
         try
         {
-            var xml = await Http.GetStringAsync(RssUrl);
+            // 1. Создаём запрос с заголовками браузера (обход защиты 403)
+            using var request = new HttpRequestMessage(HttpMethod.Get, RssUrl);
+            request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+            request.Headers.Add("Accept", "application/rss+xml, application/xml, text/xml, */*");
+
+            // 2. Отправляем запрос
+            using var response = await Http.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Сервер вернул ошибку: {(int)response.StatusCode} {(response.ReasonPhrase)}");
+            }
+
+            // 3. Парсим XML
+            var xml = await response.Content.ReadAsStringAsync();
             var doc = System.Xml.Linq.XDocument.Parse(xml);
 
             var channel = doc.Root?.Element("channel");
@@ -84,12 +99,12 @@ else
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Ошибка загрузки RSS: {ex.Message}";
-            // Демо-данные на случай недоступности источника
+            ErrorMessage = $"Ошибка: {ex.Message}. Попробуйте позже или проверьте доступность портала.";
+            // Демо-данные на случай блокировки
             Items = new List<RssItem>
             {
-                new() { Title = "Демо-закупка #1", Link = "#", Description = "Реальный RSS требует корректного URL.", PubDate = DateTime.Now },
-                new() { Title = "Демо-закупка #2", Link = "#", Description = "Пример с <b>HTML</b> разметкой.", PubDate = DateTime.Now.AddHours(-2) }
+                new() { Title = "Демо-закупка #1", Link = "#", Description = "Портал вернул 403. Заголовки добавлены, попробуйте обновить.", PubDate = DateTime.Now },
+                new() { Title = "Демо-закупка #2", Link = "#", Description = "Если ошибка persists, возможно, требуется прокси или токен.", PubDate = DateTime.Now.AddHours(-2) }
             };
         }
         finally
