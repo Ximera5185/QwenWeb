@@ -71,9 +71,9 @@
 
         try
         {
-            var apiKey = Config["Qwen:ApiKey"];
-            var endpoint = Config["Qwen:Endpoint"];
-            var model = Config["Qwen:Model"];
+            string? apiKey = Config["Qwen:ApiKey"];
+            string? endpoint = Config["Qwen:Endpoint"];
+            string? model = Config["Qwen:Model"];
 
             if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(endpoint))
             {
@@ -81,11 +81,11 @@
                 FinishRequest();
                 return;
             }
-
             using var handler = new HttpClientHandler
             {
                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             };
+
             using var client = new HttpClient(handler);
             client.Timeout = TimeSpan.FromMinutes(5);
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
