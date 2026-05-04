@@ -1,0 +1,68 @@
+﻿@page "/chat"
+@rendermode InteractiveServer
+
+<h3>Чат с Qwen</h3>
+
+<div class="chat-wrapper">
+    <div class="chat-messages">
+        @foreach (var msg in Messages)
+        {
+            <div class="msg @(msg.IsUser ? "user" : "ai")">
+                @msg.Text
+            </div>
+        }
+    </div>
+
+    <div class="chat-input">
+        <input @bind="UserInput"
+               @bind:event="oninput"
+               placeholder="Введите сообщение..."
+               @onkeydown="OnKeyDown" />
+        <button @onclick="Send" disabled="@IsLoading">
+            @(IsLoading ? "..." : "➤")
+        </button>
+    </div>
+</div>
+
+@code {
+    public List<ChatMessage> Messages { get; set; } = new();
+    public string UserInput { get; set; } = "";
+    public bool IsLoading { get; set; }
+
+    public class ChatMessage
+    {
+        public string Text { get; set; } = "";
+        public bool IsUser { get; set; }
+    }
+
+    public async Task Send()
+    {
+        if (string.IsNullOrWhiteSpace(UserInput) || IsLoading) return;
+
+        Messages.Add(new ChatMessage { Text = UserInput, IsUser = true });
+        var question = UserInput;
+        UserInput = "";
+        IsLoading = true;
+        StateHasChanged();
+
+        // Имитация задержки (заглушка)
+        await Task.Delay(600);
+
+        Messages.Add(new ChatMessage
+        {
+            Text = $"Заглушка: получил \"{question}\"",
+            IsUser = false
+        });
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    public async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey && !e.CtrlKey)
+        {
+            await Send();
+        }
+    }
+}
