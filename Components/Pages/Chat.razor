@@ -1,60 +1,177 @@
 ﻿@page "/chat"
 @rendermode InteractiveServer
+@inject HttpClient Http
+@inject IConfiguration Config
 
-<h3>Чат с Qwen</h3>
+<h3>💬 Чат с Qwen</h3>
 
 <div class="chat-wrapper">
     <div class="chat-messages">
         @foreach (var msg in Messages)
         {
-            <div class="msg @(msg.IsUser ? "user" : "ai")">
-                @msg.Text
+            <div class="msg @(msg.Role == "user" ? "user" : "ai")">
+                @msg.Content
             </div>
         }
+
+        @if (IsStreaming && !string.IsNullOrEmpty(StreamBuffer))
+        {
+            <div class="msg ai">@StreamBuffer<span class="cursor">▋</span></div>
+        }
+        else if (IsStreaming && string.IsNullOrEmpty(StreamBuffer))
+        {
+            <div class="msg ai">🔄 Думаю...</div>
+        }
     </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="error-box">❌ @ErrorMessage</div>
+    }
 
     <div class="chat-input">
         <input @bind="UserInput"
                @bind:event="oninput"
-               placeholder="Введите сообщение..."
-               @onkeydown="OnKeyDown" />
-        <button @onclick="Send" disabled="@IsLoading">
-            @(IsLoading ? "..." : "➤")
+               placeholder="Введите сообщение... (Enter — отправить)"
+               @onkeydown="OnKeyDown"
+               disabled="@IsLoading" />
+        <button @onclick="Send" disabled="@(IsLoading || string.IsNullOrWhiteSpace(UserInput))">
+            @(IsLoading ? "⏳" : "➤")
         </button>
     </div>
 </div>
 
 @code {
-    public List<ChatMessage> Messages { get; set; } = new();
-    public string UserInput { get; set; } = "";
+    public List<Msg> Messages { get; set; } = new List<Msg>();
+    public string UserInput { get; set; } = string.Empty;
+    public string StreamBuffer { get; set; } = string.Empty;
+    public string ErrorMessage { get; set; } = string.Empty;
     public bool IsLoading { get; set; }
+    public bool IsStreaming { get; set; }
 
-    public class ChatMessage
+    public class Msg
     {
-        public string Text { get; set; } = "";
-        public bool IsUser { get; set; }
+        public string Role { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
     }
 
     public async Task Send()
     {
         if (string.IsNullOrWhiteSpace(UserInput) || IsLoading) return;
 
-        Messages.Add(new ChatMessage { Text = UserInput, IsUser = true });
         var question = UserInput;
-        UserInput = "";
+        UserInput = string.Empty;
+        StreamBuffer = string.Empty;
+        ErrorMessage = string.Empty;
         IsLoading = true;
+        IsStreaming = true;
         StateHasChanged();
 
-        // Имитация задержки (заглушка)
-        await Task.Delay(600);
+        Messages.Add(new Msg { Role = "user", Content = question });
 
-        Messages.Add(new ChatMessage
+        try
         {
-            Text = $"Заглушка: получил \"{question}\"",
-            IsUser = false
-        });
+            var apiKey = Config["Qwen:ApiKey"];
+            var endpoint = Config["Qwen:Endpoint"];
+            var model = Config["Qwen:Model"];
 
+            if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(endpoint))
+            {
+                ErrorMessage = "Не настроены API ключ или адрес в appsettings.json";
+                FinishRequest();
+                return;
+            }
+
+            using var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+            using var client = new HttpClient(handler);
+            client.Timeout = TimeSpan.FromMinutes(5);
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+
+            var payload = new
+            {
+                model = model,
+                messages = new[] {
+                    new { role = "system", content = "Ты полезный ассистент. Отвечай кратко и по-русски." }
+                }.Concat(
+                    Messages.Where(m => m.Role != "system")
+                            .Select(m => new { role = m.Role, content = m.Content })
+                ),
+                stream = true
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(payload);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            using var response = await client.PostAsync(endpoint, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var err = await response.Content.ReadAsStringAsync();
+                ErrorMessage = $"HTTP {(int)response.StatusCode}: {err}";
+                FinishRequest();
+                return;
+            }
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var reader = new System.IO.StreamReader(stream);
+
+            while (!reader.EndOfStream && IsLoading)
+            {
+                var line = await reader.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith(":")) continue;
+
+                var trimmed = line.TrimStart();
+                if (!trimmed.StartsWith("data:")) continue;
+
+                var data = trimmed.Substring("data:".Length).Trim();
+                if (data == "[DONE]") break;
+
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(data);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+                    {
+                        var delta = choices[0].GetProperty("delta");
+                        if (delta.TryGetProperty("content", out var c) && c.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            var token = c.GetString();
+                            if (!string.IsNullOrEmpty(token))
+                            {
+                                StreamBuffer += token;
+                                await InvokeAsync(StateHasChanged);
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            if (!string.IsNullOrEmpty(StreamBuffer))
+            {
+                Messages.Add(new Msg { Role = "assistant", Content = StreamBuffer });
+                StreamBuffer = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Ошибка: {ex.Message}";
+            if (Messages.Count > 0 && Messages.Last().Role == "user")
+                Messages.RemoveAt(Messages.Count - 1);
+        }
+        finally
+        {
+            FinishRequest();
+        }
+    }
+
+    private void FinishRequest()
+    {
         IsLoading = false;
+        IsStreaming = false;
         StateHasChanged();
     }
 
@@ -62,6 +179,7 @@
     {
         if (e.Key == "Enter" && !e.ShiftKey && !e.CtrlKey)
         {
+            // e.PreventDefault(); // ❌ Удалено: в Blazor не нужен
             await Send();
         }
     }
