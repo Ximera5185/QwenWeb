@@ -1,0 +1,109 @@
+﻿@page "/tenders"
+@rendermode InteractiveServer
+@inject HttpClient Http
+
+<h3>📜 Лента госзакупок (RSS)</h3>
+
+@if (IsLoading)
+{
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Загрузка данных...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger">❌ @ErrorMessage</div>
+    <button class="btn btn-outline-secondary btn-sm" @onclick="LoadFeed"> Попробовать снова</button>
+}
+else if (Items?.Any() == true)
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted">Найдено: @Items.Count записей</span>
+        <button class="btn btn-outline-primary btn-sm" @onclick="LoadFeed">🔄 Обновить</button>
+    </div>
+
+    <div class="list-group">
+        @foreach (var item in Items)
+        {
+            <a href="@item.Link" target="_blank" rel="noopener" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">@item.Title</h6>
+                    <small class="text-muted">@item.PubDate?.ToString("dd.MM.yyyy HH:mm")</small>
+                </div>
+                <p class="mb-1 text-secondary" style="font-size: 0.9rem;">
+                    @((MarkupString)item.Description)
+                </p>
+            </a>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-info">📭 Лента пуста или не удалось получить данные.</div>
+}
+
+@code {
+    public List<RssItem> Items { get; set; } = new();
+    public bool IsLoading { get; set; }
+    public string ErrorMessage { get; set; } = string.Empty;
+
+    // 👇 Замени на актуальную ссылку RSS, если нужно
+    private const string RssUrl = "https://zakupki.gov.ru/epz/order/extendedsearch/rss.html";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFeed();
+    }
+
+    public async Task LoadFeed()
+    {
+        IsLoading = true;
+        ErrorMessage = string.Empty;
+        Items.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var xml = await Http.GetStringAsync(RssUrl);
+            var doc = System.Xml.Linq.XDocument.Parse(xml);
+
+            var channel = doc.Root?.Element("channel");
+            if (channel != null)
+            {
+                Items = channel.Elements("item")
+                               .Select(i => new RssItem
+                               {
+                                   Title = i.Element("title")?.Value ?? "Без названия",
+                                   Link = i.Element("link")?.Value ?? "#",
+                                   Description = i.Element("description")?.Value ?? "",
+                                   PubDate = DateTime.TryParse(i.Element("pubDate")?.Value, out var dt) ? dt : null
+                               })
+                               .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Ошибка загрузки RSS: {ex.Message}";
+            // Демо-данные на случай недоступности источника
+            Items = new List<RssItem>
+            {
+                new() { Title = "Демо-закупка #1", Link = "#", Description = "Реальный RSS требует корректного URL.", PubDate = DateTime.Now },
+                new() { Title = "Демо-закупка #2", Link = "#", Description = "Пример с <b>HTML</b> разметкой.", PubDate = DateTime.Now.AddHours(-2) }
+            };
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    public class RssItem
+    {
+        public string Title { get; set; } = "";
+        public string Link { get; set; } = "";
+        public string Description { get; set; } = "";
+        public DateTime? PubDate { get; set; }
+    }
+}
