@@ -24,6 +24,8 @@ public class TenderMonitorBackgroundService : BackgroundService
     private int _newTendersFoundLastRun;
     private DateTime _lastRunTimeUtc = DateTime.MinValue;
     private bool _isErrorLastRun;
+    private readonly object _delayLock = new object();
+    private CancellationTokenSource? _delayCts;
 
     // Properties (Thread-safe)
     public int TotalPollsCount
@@ -55,6 +57,13 @@ public class TenderMonitorBackgroundService : BackgroundService
 
     // Public Methods
 
+    public void ResetDelay()
+    {
+        lock (_delayLock)
+        {
+            _delayCts?.Cancel();
+        }
+    }
     public TenderMonitorBackgroundService(
     IServiceScopeFactory scopeFactory,
     ILogger<TenderMonitorBackgroundService> logger,
@@ -73,12 +82,34 @@ public class TenderMonitorBackgroundService : BackgroundService
     // Protected/Override
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Первый опрос сразу при старте
         await FetchAndSaveAsync(stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
         {
             int interval = _settings.PollIntervalMinutes;
-            await Task.Delay(TimeSpan.FromMinutes(interval), stoppingToken);
+            CancellationTokenSource delayCts;
+
+            lock (_delayLock)
+            {
+                // Создаём новый токен для текущего цикла ожидания
+                delayCts = _delayCts = new CancellationTokenSource();
+            }
+
+            try
+            {
+                // Ждём указанный интервал. Прервётся, если вызвать ResetDelay()
+                await Task.Delay(TimeSpan.FromMinutes(interval), delayCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Ожидание прервано (смена интервала или остановка приложения)
+            }
+
+            // Если приложение останавливается — выходим из цикла
+            if (stoppingToken.IsCancellationRequested) break;
+
+            // Выполняем опрос
             await FetchAndSaveAsync(stoppingToken);
         }
     }

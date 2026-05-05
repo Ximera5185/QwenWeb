@@ -5,9 +5,9 @@ namespace QwenWeb.Configuration;
 public class MonitorSettings
 {
     private readonly object _lock = new object();
-    private int _pollIntervalMinutes = 30; // 👈 Явная инициализация по умолчанию
+    private int _pollIntervalMinutes = 2; // 👈 Дефолт: 2 минуты (минимум)
 
-    public string RssUrl { get; set; } = string.Empty; // 👈 Защита от CS8618
+    public string RssUrl { get; set; } = string.Empty;
     public int HttpClientTimeoutMinutes { get; set; } = 2;
     public int DatabaseCommandTimeoutSeconds { get; set; } = 30;
 
