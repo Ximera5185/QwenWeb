@@ -1,6 +1,15 @@
 using QwenWeb.Components;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 🧪 Тестовый модуль мониторинга закупок
+builder.Services.AddDbContext<QwenWeb.Data.TenderMonitorDbContext>(options =>
+    options.UseSqlite("Data Source=monitor_test.db"));
+
+builder.Services.AddSingleton<QwenWeb.Services.TenderMonitorBackgroundService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<QwenWeb.Services.TenderMonitorBackgroundService>());
+// ==============================================
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
