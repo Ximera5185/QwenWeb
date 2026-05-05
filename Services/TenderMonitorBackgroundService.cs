@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using QwenWeb.Configuration;
 
 namespace QwenWeb.Services;
 
@@ -17,8 +18,7 @@ public class TenderMonitorBackgroundService : BackgroundService
     // Fields
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<TenderMonitorBackgroundService> _logger;
-    private const string RssUrl = "https://zakupki.gov.ru/epz/order/extendedsearch/rss.html?morphology=on&search-filter=%D0%94%D0%B0%D1%82%D0%B5+%D1%80%D0%B0%D0%B7%D0%BC%D0%B5%D1%89%D0%B5%D0%BD%D0%B8%D1%8F&pageNumber=1&sortDirection=false&recordsPerPage=_50&showLotsInfoHidden=false&sortBy=UPDATE_DATE&fz44=on&fz223=on&ppRf615=on&af=on&ca=on&pc=on&pa=on&currencyIdGeneral=-1&gws=%D0%92%D1%8B%D0%B1%D0%B5%D1%80%D0%B8%D1%82%D0%B5+%D1%82%D0%B8%D0%BF+%D0%B7%D0%B0%D0%BA%D1%83%D0%BF%D0%BA%D0%B8";
-    private readonly TimeSpan _pollInterval = TimeSpan.FromMinutes(2);
+    private readonly MonitorSettings _settings = null!;
     private readonly object _statsLock = new object();
     private int _totalPollsCount;
     private int _newTendersFoundLastRun;
@@ -54,6 +54,17 @@ public class TenderMonitorBackgroundService : BackgroundService
     }
 
     // Public Methods
+
+    public TenderMonitorBackgroundService(
+    IServiceScopeFactory scopeFactory,
+    ILogger<TenderMonitorBackgroundService> logger,
+    MonitorSettings settings)
+    {
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+        _settings = settings;
+    }
+
     public async Task RunManualAsync()
     {
         await FetchAndSaveAsync(CancellationToken.None);
@@ -66,7 +77,8 @@ public class TenderMonitorBackgroundService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(_pollInterval, stoppingToken);
+            int interval = _settings.PollIntervalMinutes;
+            await Task.Delay(TimeSpan.FromMinutes(interval), stoppingToken);
             await FetchAndSaveAsync(stoppingToken);
         }
     }
@@ -89,7 +101,7 @@ public class TenderMonitorBackgroundService : BackgroundService
                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             };
             using HttpClient client = new HttpClient(handler);
-            client.Timeout = TimeSpan.FromMinutes(2);
+            client.Timeout = TimeSpan.FromMinutes(_settings.HttpClientTimeoutMinutes);
             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
             client.DefaultRequestHeaders.Add("Accept", "application/rss+xml, application/xml, text/xml, */*");
 
@@ -102,7 +114,7 @@ public class TenderMonitorBackgroundService : BackgroundService
             {
                 try
                 {
-                    response = await client.GetAsync(RssUrl, token);
+                    response = await client.GetAsync(_settings.RssUrl, token);
                     if (response.IsSuccessStatusCode)
                     {
                         break;

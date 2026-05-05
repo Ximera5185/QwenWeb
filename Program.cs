@@ -1,14 +1,21 @@
-using QwenWeb.Components;
+using QwenWeb.Configuration;
 using Microsoft.EntityFrameworkCore;
+using QwenWeb.Data;
+using QwenWeb.Services;
+using QwenWeb.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 🧪 Тестовый модуль мониторинга закупок
-builder.Services.AddDbContext<QwenWeb.Data.TenderMonitorDbContext>(options =>
+MonitorSettings monitorSettings = new MonitorSettings();
+builder.Configuration.GetSection("MonitorSettings").Bind(monitorSettings);
+builder.Services.AddSingleton<MonitorSettings>(monitorSettings);
+
+builder.Services.AddDbContext<TenderMonitorDbContext>(options =>
     options.UseSqlite("Data Source=monitor_test.db"));
 
-builder.Services.AddSingleton<QwenWeb.Services.TenderMonitorBackgroundService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<QwenWeb.Services.TenderMonitorBackgroundService>());
+builder.Services.AddSingleton<TenderMonitorBackgroundService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<TenderMonitorBackgroundService>());
 // ==============================================
 
 builder.Services.AddRazorComponents()
