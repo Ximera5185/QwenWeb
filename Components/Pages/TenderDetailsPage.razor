@@ -1,0 +1,159 @@
+﻿@page "/tender"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@inject QwenWeb.Data.TenderMonitorDbContext Db
+@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+@using QwenWeb.Models
+@using QwenWeb.Services.Parsing
+@using QwenWeb.Components
+
+@if (isLoading)
+{
+    <div class="d-flex justify-content-center align-items-center" style="height: 300px;">
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
+}
+else if (record == null)
+{
+    <div class="alert alert-warning mt-4">
+        <h6 class="alert-heading">⚠️ Запись не найдена</h6>
+        <p class="mb-0 small">Возможно, ссылка повреждена или закупка удалена.</p>
+        <button class="btn btn-sm btn-outline-primary mt-2" @onclick="GoBack">← Назад</button>
+    </div>
+}
+else
+{
+    <div class="container-fluid px-3 py-2">
+        <button class="btn btn-sm btn-outline-secondary mb-2" @onclick="GoBack">
+            ← Назад к списку
+        </button>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold text-truncate" style="max-width: 70%;">
+                    @ParsedInfo.ObjectName
+                </h5>
+                <div class="d-flex gap-1">
+                    @if (!string.IsNullOrEmpty(ParsedInfo.LawType))
+                    {
+                        <span class="badge bg-primary">@ParsedInfo.LawType</span>
+                    }
+                    @if (!string.IsNullOrEmpty(ParsedInfo.Stage))
+                    {
+                        <span class="badge @(GetStageBadgeClass(ParsedInfo.Stage))">@ParsedInfo.Stage</span>
+                    }
+                </div>
+            </div>
+
+            <div class="card-body py-2 px-3">
+                <!-- Цена и заказчик в одну строку -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+                    <div class="small text-muted">
+                        🏢 <span class="text-dark">@ParsedInfo.Customer</span>
+                    </div>
+                    @if (ParsedInfo.InitialPrice.HasValue)
+                    {
+                        <div class="fw-bold text-success">
+                            💰 @ParsedInfo.InitialPrice.Value.ToString("N2", System.Globalization.CultureInfo.CurrentCulture) @ParsedInfo.Currency
+                        </div>
+                    }
+                </div>
+
+                <!-- Даты и ссылка -->
+                <div class="row small text-muted mb-2">
+                    <div class="col-auto">📅 @FormatDate(record.PubDate)</div>
+                    <div class="col-auto">🔄 @FormatDateUtc(record.CreatedAtUtc)</div>
+                    <div class="col-12 text-break" style="font-size: 0.75rem;">🔗 @record.Link</div>
+                </div>
+
+                <!-- Полное описание из RSS (всегда развернуто, с рендерингом HTML) -->
+                <div class="mt-3">
+                    <h6 class="mb-2 small text-muted">📜 Полное описание (из RSS)</h6>
+                    <div class="p-3 bg-light rounded small tender-rss-content"
+                         style="line-height: 1.5; word-wrap: break-word;">
+                        @((MarkupString)(ParsedInfo.RawDescription ?? string.Empty))
+                    </div>
+                </div>
+
+                <!-- Зона ИИ -->
+                <div class="mt-3 p-3 border rounded bg-light text-center">
+                    <small class="text-muted d-block mb-1">🤖 AI-Аналитика</small>
+                    <button class="btn btn-sm btn-outline-primary disabled" disabled>
+                        Модуль в разработке
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    /* Стили для контента, загруженного из RSS */
+    .tender-rss-content a {
+        color: #0d6efd;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .tender-rss-content a:hover {
+            text-decoration: underline;
+        }
+
+    .tender-rss-content strong,
+    .tender-rss-content b {
+        font-weight: 600;
+        color: #1a1a1a;
+    }
+
+    .tender-rss-content br {
+        line-height: 1.4;
+    }
+</style>
+
+@code {
+    private QwenWeb.Models.TenderMonitorRecord? record;
+    private QwenWeb.Models.ParsedTenderInfo ParsedInfo = new QwenWeb.Models.ParsedTenderInfo();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        string currentUri = NavigationManager.Uri;
+        System.Uri uri = new System.Uri(currentUri);
+        string? linkQuery = System.Web.HttpUtility.ParseQueryString(uri.Query)["link"];
+
+        if (!string.IsNullOrEmpty(linkQuery))
+        {
+            string decodedLink = System.Uri.UnescapeDataString(linkQuery);
+            record = await Db.Tenders.FirstOrDefaultAsync(t => t.Link == decodedLink);
+
+            if (record != null)
+            {
+                ParsedInfo = TenderInfoParser.Parse(record.Description);
+            }
+        }
+        isLoading = false;
+    }
+
+    private string FormatDate(DateTime? dateTime)
+    {
+        return dateTime?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
+    }
+
+    private string FormatDateUtc(DateTime? dateTimeUtc)
+    {
+        return dateTimeUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
+    }
+
+    private string GetStageBadgeClass(string stage)
+    {
+        if (string.IsNullOrEmpty(stage)) return "bg-secondary";
+        return stage.Contains("Подача", System.StringComparison.OrdinalIgnoreCase) ? "bg-success" :
+               stage.Contains("Завершена", System.StringComparison.OrdinalIgnoreCase) ? "bg-secondary" :
+               stage.Contains("Отменена", System.StringComparison.OrdinalIgnoreCase) ? "bg-danger" : "bg-info";
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/monitor");
+    }
+}
