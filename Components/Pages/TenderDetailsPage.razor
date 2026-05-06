@@ -1,6 +1,8 @@
 ﻿@page "/tender"
 @rendermode InteractiveServer
 @using Microsoft.EntityFrameworkCore
+@using System.Linq
+@using System.Web
 @inject QwenWeb.Data.TenderMonitorDbContext Db
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
 @using QwenWeb.Models
@@ -46,7 +48,7 @@ else
             </div>
 
             <div class="card-body py-2 px-3">
-                <!-- Цена и заказчик в одну строку -->
+                <!-- Цена и заказчик -->
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
                     <div class="small text-muted">
                         🏢 <span class="text-dark">@ParsedInfo.Customer</span>
@@ -66,7 +68,7 @@ else
                     <div class="col-12 text-break" style="font-size: 0.75rem;">🔗 @record.Link</div>
                 </div>
 
-                <!-- Полное описание из RSS (всегда развернуто, с рендерингом HTML) -->
+                <!-- Описание из RSS -->
                 <div class="mt-3">
                     <h6 class="mb-2 small text-muted">📜 Полное описание (из RSS)</h6>
                     <div class="p-3 bg-light rounded small tender-rss-content"
@@ -75,12 +77,189 @@ else
                     </div>
                 </div>
 
-                <!-- Зона ИИ -->
+                <!-- 📎 Документация закупки (Этапы 3-5) -->
+                <div class="mt-4 p-3 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-bold">📎 Документация закупки</h6>
+                        @if (documentListState == DocumentListState.Idle)
+                        {
+                            <button class="btn btn-sm btn-outline-primary" @onclick="LoadDocumentListAsync" disabled="@(isLoading || record == null)">
+                                🔍 Загрузить список
+                            </button>
+                        }
+                        else if (documentListState == DocumentListState.Loading)
+                        {
+                            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                        }
+                        else if (documentListState == DocumentListState.Ready)
+                        {
+                            <span class="badge bg-success">@documents.Count документов</span>
+                        }
+                    </div>
+
+                    @if (documentListState == DocumentListState.Error)
+                    {
+                        <div class="alert alert-warning small mb-0">
+                            ⚠️ @documentListError
+                            <button class="btn btn-link p-0 ms-2" @onclick="LoadDocumentListAsync">Повторить</button>
+                        </div>
+                    }
+                    else if (documentListState == DocumentListState.Ready && documents.Count > 0)
+                    {
+                        <div class="table-responsive small">
+                            <table class="table table-sm table-borderless mb-0">
+                                <thead class="text-muted">
+                                    <tr>
+                                        <th style="width: 40px;"></th>
+                                        <th style="width: 50%;">Файл</th>
+                                        <th>ID</th>
+                                        <th>Тип</th>
+                                        <th>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (QwenWeb.Models.EisDocumentItem doc in documents)
+                                    {
+                                        <tr class="@(selectedDocuments.Contains(doc) ? "table-primary" : "")">
+                                            <td class="text-center">
+                                                @if (doc.Status != "downloaded")
+                                                {
+                                                    <input type="checkbox"
+                                                           class="form-check-input"
+                                                           @onchange="@(e => ToggleDocumentSelection(doc))"
+                                                           disabled="@(isDownloading || doc.Status == "error")" />
+                                                }
+                                            </td>
+                                            <td class="text-break">
+                                                @if (doc.IsArchive)
+                                                {
+                                                    <span class="me-1">📦</span>
+                                                }
+                                                @doc.FileName
+                                                @if (!string.IsNullOrEmpty(doc.LocalPath))
+                                                {
+                                                    <br /><small class="text-success">✓ Локально: @Path.GetFileName(doc.LocalPath)</small>
+                                                }
+                                                @if (!string.IsNullOrEmpty(doc.ExtractedTextPath))
+                                                {
+                                                    <br /><small class="text-info">📄 Текст извлечён</small>
+                                                }
+                                            </td>
+                                            <td class="text-muted" style="font-size: 0.75rem;">@doc.FileId</td>
+                                            <td>
+                                                @if (doc.MimeType == "application/pdf")
+                                                {
+                                                    <span class="badge bg-danger">PDF</span>
+                                                }
+                                                else if (doc.MimeType?.Contains("word") == true)
+                                                {
+
+                                                    <span class="badge bg-primary">DOCX</span>
+                                                }
+                                                else if (doc.MimeType?.Contains("excel") == true)
+                                                {
+
+                                                    <span class="badge bg-success">XLSX</span>
+                                                }
+                                                else if (doc.IsArchive)
+                                                {
+
+                                                    <span class="badge bg-secondary">ARCH</span>
+                                                }
+                                                else
+                                                {
+
+                                                    <span class="badge bg-light text-dark border">FILE</span>
+                                                }
+                                            </td>
+                                            <td style="width: 140px;">
+                                                @if (doc.Status == "downloading")
+                                                {
+                                                    <div class="progress" style="height: 4px;"><div class="progress-bar" style="width: @(doc.DownloadProgress * 100)%"></div></div>
+                                                    <small class="text-muted">@((doc.DownloadProgress * 100).ToString("F0"))%</small>
+                                                }
+                                                else if (doc.Status == "downloaded")
+                                                {
+                                                    <span class="badge bg-success">✓ Скачан</span>
+                                                }
+                                                else if (doc.Status == "error")
+                                                {
+                                                    <span class="badge bg-danger" title="@doc.ErrorMessage">✗</span>
+                                                }
+                                                else
+                                                {
+                                                    <a href="@doc.DownloadUrl" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">↗</a>
+                                                }
+                                                <!-- Индикатор извлечения текста -->
+                                                @if (doc.TextExtractionStatus == "extracting")
+                                                {
+                                                    <div class="progress mt-1" style="height: 3px;"><div class="progress-bar bg-success" style="width: @(doc.TextExtractionProgress * 100)%"></div></div>
+                                                }
+                                                else if (doc.TextExtractionStatus == "extracted")
+                                                {
+                                                    <br /><small class="text-success">📄 @(doc.ExtractedText?.Length.ToString("N0")) симв.</small>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Кнопки действий (Этапы 4 и 5) -->
+                        <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top flex-wrap gap-2">
+                            <small class="text-muted">
+                                Выбрано: @selectedDocuments.Count из @documents.Count
+                                @if (!string.IsNullOrEmpty(downloadError))
+                                {
+                                    <span class="text-danger ms-2">⚠️ @downloadError</span>
+                                }
+                                @if (!string.IsNullOrEmpty(textExtractionError))
+                                {
+                                    <span class="text-danger ms-2">⚠️ @textExtractionError</span>
+                                }
+                            </small>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-primary"
+                                        @onclick="StartDownloadAsync"
+                                        disabled="@(isDownloading || selectedDocuments.Count == 0)">
+                                    @if (isDownloading)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                        <span>Скачивание...</span>
+                                    }
+                                    else
+                                    {
+                                        <span>📥 Скачать (@selectedDocuments.Count)</span>
+                                    }
+                                </button>
+
+                                <button class="btn btn-sm btn-success"
+                                        @onclick="StartTextExtractionAsync"
+                                        disabled="@(isExtractingText || documentListState != DocumentListState.Ready || documents.Count == 0)">
+                                    @if (isExtractingText)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                        <span>Извлечение...</span>
+                                    }
+                                    else
+                                    {
+                                        <span> Извлечь текст</span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else if (documentListState == DocumentListState.Idle && record != null)
+                    {
+                        <p class="text-muted small mb-0">Нажмите «Загрузить список», чтобы получить документы с ЕИС.</p>
+                    }
+                </div>
+
+                <!-- Зона ИИ (заглушка) -->
                 <div class="mt-3 p-3 border rounded bg-light text-center">
                     <small class="text-muted d-block mb-1">🤖 AI-Аналитика</small>
-                    <button class="btn btn-sm btn-outline-primary disabled" disabled>
-                        Модуль в разработке
-                    </button>
+                    <button class="btn btn-sm btn-outline-primary disabled" disabled>Модуль в разработке</button>
                 </div>
             </div>
         </div>
@@ -88,7 +267,6 @@ else
 }
 
 <style>
-    /* Стили для контента, загруженного из RSS */
     .tender-rss-content a {
         color: #0d6efd;
         text-decoration: none;
@@ -99,8 +277,7 @@ else
             text-decoration: underline;
         }
 
-    .tender-rss-content strong,
-    .tender-rss-content b {
+    .tender-rss-content strong, .tender-rss-content b {
         font-weight: 600;
         color: #1a1a1a;
     }
@@ -115,6 +292,41 @@ else
     private QwenWeb.Models.ParsedTenderInfo ParsedInfo = new QwenWeb.Models.ParsedTenderInfo();
     private bool isLoading = true;
 
+    // 👇 Этап 3: Документация
+    [Inject] public QwenWeb.Services.Documents.EisDocumentService DocumentService { get; set; } = null!;
+    private List<QwenWeb.Models.EisDocumentItem> documents = new List<QwenWeb.Models.EisDocumentItem>();
+    private DocumentListState documentListState = DocumentListState.Idle;
+    private string? documentListError;
+    private enum DocumentListState { Idle, Loading, Ready, Error }
+
+    // 👇 Этап 4: Скачивание
+    private List<QwenWeb.Models.EisDocumentItem> selectedDocuments = new List<QwenWeb.Models.EisDocumentItem>();
+    private bool isDownloading = false;
+    private string? downloadError;
+    private readonly Progress<QwenWeb.Models.EisDocumentItem> downloadProgress = new();
+
+    // 👇 Этап 5: Извлечение текста
+    private bool isExtractingText = false;
+    private string? textExtractionError;
+    private readonly Progress<QwenWeb.Models.EisDocumentItem> textExtractionProgress = new();
+    private int totalExtractedChars = 0;
+
+    protected override void OnInitialized()
+    {
+        // Подписка на прогресс скачивания
+        downloadProgress.ProgressChanged += (sender, doc) => { if (doc != null) StateHasChanged(); };
+
+        // Подписка на прогресс извлечения текста
+        textExtractionProgress.ProgressChanged += (sender, doc) =>
+        {
+            if (doc != null)
+            {
+                totalExtractedChars = documents.Sum(d => d.ExtractedText?.Length ?? 0);
+                StateHasChanged();
+            }
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         string currentUri = NavigationManager.Uri;
@@ -125,7 +337,6 @@ else
         {
             string decodedLink = System.Uri.UnescapeDataString(linkQuery);
             record = await Db.Tenders.FirstOrDefaultAsync(t => t.Link == decodedLink);
-
             if (record != null)
             {
                 ParsedInfo = TenderInfoParser.Parse(record.Description);
@@ -134,15 +345,153 @@ else
         isLoading = false;
     }
 
-    private string FormatDate(DateTime? dateTime)
+    private async Task LoadDocumentListAsync()
     {
-        return dateTime?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
+        if (record == null || string.IsNullOrEmpty(record.Link))
+        {
+            documentListError = "Нет ссылки на закупку";
+            documentListState = DocumentListState.Error;
+            StateHasChanged();
+            return;
+        }
+
+        documentListState = DocumentListState.Loading;
+        documentListError = null;
+        StateHasChanged();
+
+        try
+        {
+            documents = await DocumentService.GetDocumentListAsync(record.Link);
+            documentListState = documents.Count > 0 ? DocumentListState.Ready : DocumentListState.Idle;
+        }
+        catch (Exception ex)
+        {
+            documentListError = ex.Message;
+            documentListState = DocumentListState.Error;
+        }
+        StateHasChanged();
     }
 
-    private string FormatDateUtc(DateTime? dateTimeUtc)
+    private async Task StartDownloadAsync()
     {
-        return dateTimeUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
+        if (record == null || selectedDocuments.Count == 0)
+        {
+            downloadError = "Не выбраны файлы для скачивания";
+            StateHasChanged();
+            return;
+        }
+
+        isDownloading = true;
+        downloadError = null;
+        StateHasChanged();
+
+        try
+        {
+            string? regNumber = ExtractRegNumber(record.Link);
+            if (string.IsNullOrEmpty(regNumber))
+            {
+                downloadError = "Не удалось определить номер закупки";
+                isDownloading = false;
+                StateHasChanged();
+                return;
+            }
+
+            List<QwenWeb.Models.EisDocumentItem> results = await DocumentService.DownloadFilesAsync(
+                regNumber, selectedDocuments, downloadProgress);
+
+            for (int i = 0; i < documents.Count; i++)
+            {
+                QwenWeb.Models.EisDocumentItem? result = results.FirstOrDefault(r => r.FileId == documents[i].FileId);
+                if (result != null)
+                {
+                    documents[i].Status = result.Status;
+                    documents[i].LocalPath = result.LocalPath;
+                    documents[i].ErrorMessage = result.ErrorMessage;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            downloadError = $"Ошибка: {ex.Message}";
+        }
+        finally
+        {
+            isDownloading = false;
+            StateHasChanged();
+        }
     }
+
+    private async Task StartTextExtractionAsync()
+    {
+        if (record == null || documents.Count == 0)
+        {
+            textExtractionError = "Нет документов для обработки";
+            StateHasChanged();
+            return;
+        }
+
+        isExtractingText = true;
+        textExtractionError = null;
+        totalExtractedChars = 0;
+        StateHasChanged();
+
+        try
+        {
+            string? regNumber = ExtractRegNumber(record.Link);
+            if (string.IsNullOrEmpty(regNumber))
+            {
+                textExtractionError = "Не удалось определить номер закупки";
+                isExtractingText = false;
+                StateHasChanged();
+                return;
+            }
+
+            List<QwenWeb.Models.EisDocumentItem> results = await DocumentService.ExtractTextFromDocumentsAsync(
+                regNumber, documents, textExtractionProgress);
+
+            for (int i = 0; i < documents.Count; i++)
+            {
+                QwenWeb.Models.EisDocumentItem? result = results.FirstOrDefault(r => r.FileId == documents[i].FileId);
+                if (result != null)
+                {
+                    documents[i].ExtractedText = result.ExtractedText;
+                    documents[i].ExtractedTextPath = result.ExtractedTextPath;
+                    documents[i].TextExtractionStatus = result.TextExtractionStatus;
+                    documents[i].TextExtractionError = result.TextExtractionError;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            textExtractionError = $"Ошибка: {ex.Message}";
+        }
+        finally
+        {
+            isExtractingText = false;
+            StateHasChanged();
+        }
+    }
+
+    private static string? ExtractRegNumber(string? link)
+    {
+        if (string.IsNullOrEmpty(link)) return null;
+        int index = link.IndexOf("regNumber=", StringComparison.OrdinalIgnoreCase);
+        if (index == -1) return null;
+        index += "regNumber=".Length;
+        int endIndex = link.IndexOf('&', index);
+        if (endIndex == -1) endIndex = link.Length;
+        return link.Substring(index, endIndex - index);
+    }
+
+    private void ToggleDocumentSelection(QwenWeb.Models.EisDocumentItem doc)
+    {
+        if (selectedDocuments.Contains(doc)) { selectedDocuments.Remove(doc); }
+        else { selectedDocuments.Add(doc); }
+        StateHasChanged();
+    }
+
+    private string FormatDate(DateTime? dateTime) => dateTime?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
+    private string FormatDateUtc(DateTime? dateTimeUtc) => dateTimeUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
 
     private string GetStageBadgeClass(string stage)
     {
@@ -152,8 +501,5 @@ else
                stage.Contains("Отменена", System.StringComparison.OrdinalIgnoreCase) ? "bg-danger" : "bg-info";
     }
 
-    private void GoBack()
-    {
-        NavigationManager.NavigateTo("/monitor");
-    }
+    private void GoBack() => NavigationManager.NavigateTo("/monitor");
 }
