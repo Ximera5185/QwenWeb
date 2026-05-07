@@ -1,4 +1,51 @@
 === НАЧАЛО: 15 ОСНОВНЫХ КОМАНД POWERSHELL ===
+0.1 КОНТЕКСТ ДЛЯ AI
+
+Get-ChildItem -Recurse -Include *.cs,*.csproj,*.razor,*.json | 
+Where-Object { $_.FullName -notmatch 'bin|obj|.git' } | 
+ForEach-Object { 
+    echo "`n`n### FILE: $($_.FullName) ###`n" 
+    Get-Content $_.FullName 
+} > project_dump.txt
+
+или 
+
+$o="project_context.txt"; $e="*.cs","*.csproj","*.razor","*.json","*.config","*.xml","*.md","*.txt","*.yml"; $x="bin|obj|\.git|\.vs|node_modules|wwwroot\\lib"; Get-ChildItem -Recurse -Include $e | Where-Object { $_.FullName -notmatch $x } | ForEach-Object { $r=$_.FullName.Replace((Get-Location).Path,'').TrimStart('\'); "`n`n### FILE: $r ###`n"; Get-Content $_.FullName -Raw -Encoding UTF8 } | Out-File -FilePath $o -Encoding UTF8 -Force; Write-Host "✅ Сохранено в: $o" -ForegroundColor Green
+
+или
+(Лучший вариант)
+
+$output = "project_context.txt"
+$exts = "*.cs","*.csproj","*.razor","*.json","*.config","*.xml","*.md","*.txt","*.yml"
+$exclude = "bin|obj|\.git|\.vs|node_modules|wwwroot|Storage|Migrations|project_context.txt|project_dump.txt|monitor_test.db"
+$maxSize = 5MB
+
+$files = Get-ChildItem -Recurse -Include $exts | Where-Object { $_.FullName -notmatch $exclude }
+$total = $files.Count
+$counter = 0
+
+"=== PROJECT CONTEXT DUMP ===" | Out-File -FilePath $output -Encoding UTF8 -Force
+
+foreach ($f in $files) {
+    $counter++
+    # Пропускаем большие файлы (логи, дампы, кэш)
+    if ($f.Length -gt $maxSize) { continue }
+
+    $rel = $f.FullName.Replace((Get-Location).Path, '').TrimStart('\')
+    "`n`n### FILE: $rel ###`n" | Out-File -FilePath $output -Append -Encoding UTF8
+    Get-Content $f.FullName -Raw -Encoding UTF8 | Out-File -FilePath $output -Append -Encoding UTF8
+
+    # Индикатор прогресса (обновляется в той же строке)
+    $pct = [math]::Round(($counter/$total)*100)
+    Write-Host "[$counter/$total] $pct% - $rel" -NoNewline
+    Write-Host "`r" -NoNewline
+}
+
+Write-Host "`n✅ Готово! Файл: $output" -ForegroundColor Green
+Write-Host "📦 Размер: $([math]::Round((Get-Item $output).Length/1KB,1)) KB" -ForegroundColor Cyan
+
+
+
 
 1. Get-ChildItem (dir, ls)
    Описание: Показать файлы и папки в текущей директории.

@@ -1,13 +1,13 @@
 ﻿@page "/tender"
 @rendermode InteractiveServer
+@implements IDisposable  
 @using Microsoft.EntityFrameworkCore
 @using System.Linq
-@using System.Web
 @inject QwenWeb.Data.TenderMonitorDbContext Db
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
-@using QwenWeb.Models
+@* @using QwenWeb.Models
 @using QwenWeb.Services.Parsing
-@using QwenWeb.Components
+@using QwenWeb.Components *@
 
 @if (isLoading)
 {
@@ -73,7 +73,7 @@ else
                     <h6 class="mb-2 small text-muted">📜 Полное описание (из RSS)</h6>
                     <div class="p-3 bg-light rounded small tender-rss-content"
                          style="line-height: 1.5; word-wrap: break-word;">
-                        @((MarkupString)(ParsedInfo.RawDescription ?? string.Empty))
+                        @((MarkupString) (ParsedInfo.RawDescription ?? string.Empty))
                     </div>
                 </div>
 
@@ -256,10 +256,69 @@ else
                     }
                 </div>
 
-                <!-- Зона ИИ (заглушка) -->
-                <div class="mt-3 p-3 border rounded bg-light text-center">
-                    <small class="text-muted d-block mb-1">🤖 AI-Аналитика</small>
-                    <button class="btn btn-sm btn-outline-primary disabled" disabled>Модуль в разработке</button>
+                <!-- 🤖 AI-Аналитика документов (ПОЛНЫЙ БЛОК) -->
+                <div class="mt-4 p-3 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-bold">🤖 AI-Аналитика</h6>
+                        @if (IsAiLoading)
+                        {
+                            <button class="btn btn-sm btn-outline-danger" @onclick="CancelAiRequest">
+                                ⏹ Стоп
+                            </button>
+                        }
+                    </div>
+
+                    <!-- Поле ввода промта -->
+                    <textarea class="form-control mb-2"
+                              rows="3"
+                              placeholder="Например: Выдели ключевые требования к поставщику..."
+                              @bind="AiPrompt"
+                              disabled="@(IsAiLoading)">
+    </textarea>
+
+                    <!-- Кнопка отправки -->
+                    <button class="btn btn-primary btn-sm mb-3"
+                            @onclick="SendToAiAsync"
+                            disabled="@(IsAiLoading || string.IsNullOrWhiteSpace(AiPrompt))">
+                        @if (IsAiLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            <span>Думаю...</span>
+                        }
+                        else
+                        {
+                            <span>🔍 Проанализировать</span>
+                        }
+                    </button>
+
+                    <!-- Область ответа -->
+                    @if (!string.IsNullOrEmpty(AiResponse) || IsAiLoading)
+                    {
+                        <div class="p-3 bg-white border rounded small ai-response"
+                             style="min-height: 80px; white-space: pre-wrap; line-height: 1.5;">
+                            @if (IsAiLoading && string.IsNullOrEmpty(AiResponse))
+                            {
+                                <span class="text-muted">🔄 Подключение к ИИ...</span>
+                            }
+                            else if (IsAiLoading)
+                            {
+                                @AiResponse
+                                <span class="cursor-blink">▋</span>
+                            }
+                            else
+                            {
+                                @AiResponse
+                            }
+                        </div>
+                    }
+
+                    <!-- Подсказка, если нет текста -->
+                    @if (documents.Count > 0 && documents.All(d => string.IsNullOrEmpty(d.ExtractedText)))
+                    {
+                        <small class="text-muted d-block mt-2">
+                            💡 Сначала нажмите «Извлечь текст», чтобы ИИ мог проанализировать документы.
+                        </small>
+                    }
                 </div>
             </div>
         </div>
@@ -285,53 +344,73 @@ else
     .tender-rss-content br {
         line-height: 1.4;
     }
+
+    .ai-response {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #1a1a1a;
+        white-space: pre-wrap;
+        line-height: 1.5;
+    }
+
+    .cursor-blink {
+        display: inline-block;
+        animation: blink 1s step-end infinite;
+        color: #0d6efd;
+        font-weight: bold;
+    }
+
+    @@keyframes blink {
+        50% {
+            opacity: 0;
+        }
+    }
 </style>
+  
 
 @code {
     private QwenWeb.Models.TenderMonitorRecord? record;
-    private QwenWeb.Models.ParsedTenderInfo ParsedInfo = new QwenWeb.Models.ParsedTenderInfo();
+    private QwenWeb.Models.ParsedTenderInfo ParsedInfo = new();
     private bool isLoading = true;
 
-    // 👇 Этап 3: Документация
     [Inject] public QwenWeb.Services.Documents.EisDocumentService DocumentService { get; set; } = null!;
-    private List<QwenWeb.Models.EisDocumentItem> documents = new List<QwenWeb.Models.EisDocumentItem>();
+    private List<QwenWeb.Models.EisDocumentItem> documents = new();
     private DocumentListState documentListState = DocumentListState.Idle;
     private string? documentListError;
     private enum DocumentListState { Idle, Loading, Ready, Error }
 
-    // 👇 Этап 4: Скачивание
-    private List<QwenWeb.Models.EisDocumentItem> selectedDocuments = new List<QwenWeb.Models.EisDocumentItem>();
+    private List<QwenWeb.Models.EisDocumentItem> selectedDocuments = new();
     private bool isDownloading = false;
     private string? downloadError;
     private readonly Progress<QwenWeb.Models.EisDocumentItem> downloadProgress = new();
 
-    // 👇 Этап 5: Извлечение текста
     private bool isExtractingText = false;
     private string? textExtractionError;
     private readonly Progress<QwenWeb.Models.EisDocumentItem> textExtractionProgress = new();
     private int totalExtractedChars = 0;
 
+    // 👇 AI-Аналитика (Шаг 2)
+    [Inject] public IConfiguration Config { get; set; } = null!;
+    private string AiPrompt { get; set; } = string.Empty;
+    private string AiResponse { get; set; } = string.Empty;
+    private bool IsAiLoading { get; set; }
+    private bool IsAiStreaming { get; set; }
+    private System.Threading.CancellationTokenSource? _aiCts;
+
     protected override void OnInitialized()
     {
-        // Подписка на прогресс скачивания
-        downloadProgress.ProgressChanged += (sender, doc) => { if (doc != null) StateHasChanged(); };
-
-        // Подписка на прогресс извлечения текста
-        textExtractionProgress.ProgressChanged += (sender, doc) =>
+        downloadProgress.ProgressChanged += (s, d) => StateHasChanged();
+        textExtractionProgress.ProgressChanged += (s, d) =>
         {
-            if (doc != null)
-            {
-                totalExtractedChars = documents.Sum(d => d.ExtractedText?.Length ?? 0);
-                StateHasChanged();
-            }
+            totalExtractedChars = documents.Sum(x => x.ExtractedText?.Length ?? 0);
+            StateHasChanged();
         };
     }
 
     protected override async Task OnInitializedAsync()
     {
         string currentUri = NavigationManager.Uri;
-        System.Uri uri = new System.Uri(currentUri);
-        string? linkQuery = System.Web.HttpUtility.ParseQueryString(uri.Query)["link"];
+        var uri = new System.Uri(currentUri);
+        string? linkQuery = System.Web.HttpUtility.ParseQueryString(uri.Query) ["link"];
 
         if (!string.IsNullOrEmpty(linkQuery))
         {
@@ -339,7 +418,7 @@ else
             record = await Db.Tenders.FirstOrDefaultAsync(t => t.Link == decodedLink);
             if (record != null)
             {
-                ParsedInfo = TenderInfoParser.Parse(record.Description);
+                ParsedInfo = QwenWeb.Services.Parsing.TenderInfoParser.Parse(record.Description);
             }
         }
         isLoading = false;
@@ -347,129 +426,188 @@ else
 
     private async Task LoadDocumentListAsync()
     {
-        if (record == null || string.IsNullOrEmpty(record.Link))
-        {
-            documentListError = "Нет ссылки на закупку";
-            documentListState = DocumentListState.Error;
-            StateHasChanged();
-            return;
-        }
-
-        documentListState = DocumentListState.Loading;
-        documentListError = null;
-        StateHasChanged();
-
-        try
-        {
-            documents = await DocumentService.GetDocumentListAsync(record.Link);
-            documentListState = documents.Count > 0 ? DocumentListState.Ready : DocumentListState.Idle;
-        }
-        catch (Exception ex)
-        {
-            documentListError = ex.Message;
-            documentListState = DocumentListState.Error;
-        }
+        if (record == null || string.IsNullOrEmpty(record.Link)) { documentListError = "Нет ссылки на закупку"; documentListState = DocumentListState.Error; StateHasChanged(); return; }
+        documentListState = DocumentListState.Loading; documentListError = null; StateHasChanged();
+        try { documents = await DocumentService.GetDocumentListAsync(record.Link); documentListState = documents.Count > 0 ? DocumentListState.Ready : DocumentListState.Idle; }
+        catch (Exception ex) { documentListError = ex.Message; documentListState = DocumentListState.Error; }
         StateHasChanged();
     }
 
     private async Task StartDownloadAsync()
     {
-        if (record == null || selectedDocuments.Count == 0)
-        {
-            downloadError = "Не выбраны файлы для скачивания";
-            StateHasChanged();
-            return;
-        }
-
-        isDownloading = true;
-        downloadError = null;
-        StateHasChanged();
-
+        if (record == null || selectedDocuments.Count == 0) { downloadError = "Не выбраны файлы"; StateHasChanged(); return; }
+        isDownloading = true; downloadError = null; StateHasChanged();
         try
         {
             string? regNumber = ExtractRegNumber(record.Link);
-            if (string.IsNullOrEmpty(regNumber))
-            {
-                downloadError = "Не удалось определить номер закупки";
-                isDownloading = false;
-                StateHasChanged();
-                return;
-            }
-
-            List<QwenWeb.Models.EisDocumentItem> results = await DocumentService.DownloadFilesAsync(
-                regNumber, selectedDocuments, downloadProgress);
-
+            if (string.IsNullOrEmpty(regNumber)) { downloadError = "Не удалось определить номер закупки"; isDownloading = false; StateHasChanged(); return; }
+            var results = await DocumentService.DownloadFilesAsync(regNumber, selectedDocuments, downloadProgress);
             for (int i = 0; i < documents.Count; i++)
             {
-                QwenWeb.Models.EisDocumentItem? result = results.FirstOrDefault(r => r.FileId == documents[i].FileId);
-                if (result != null)
-                {
-                    documents[i].Status = result.Status;
-                    documents[i].LocalPath = result.LocalPath;
-                    documents[i].ErrorMessage = result.ErrorMessage;
-                }
+                var r = results.FirstOrDefault(x => x.FileId == documents [i].FileId);
+                if (r != null) { documents [i].Status = r.Status; documents [i].LocalPath = r.LocalPath; documents [i].ErrorMessage = r.ErrorMessage; }
             }
         }
-        catch (Exception ex)
-        {
-            downloadError = $"Ошибка: {ex.Message}";
-        }
-        finally
-        {
-            isDownloading = false;
-            StateHasChanged();
-        }
+        catch (Exception ex) { downloadError = $"Ошибка: {ex.Message}"; }
+        finally { isDownloading = false; StateHasChanged(); }
     }
 
     private async Task StartTextExtractionAsync()
     {
-        if (record == null || documents.Count == 0)
+        if (record == null || documents.Count == 0) { textExtractionError = "Нет документов"; StateHasChanged(); return; }
+        isExtractingText = true; textExtractionError = null; totalExtractedChars = 0; StateHasChanged();
+        try
         {
-            textExtractionError = "Нет документов для обработки";
+            string? regNumber = ExtractRegNumber(record.Link);
+            if (string.IsNullOrEmpty(regNumber)) { textExtractionError = "Не удалось определить номер закупки"; isExtractingText = false; StateHasChanged(); return; }
+            var results = await DocumentService.ExtractTextFromDocumentsAsync(regNumber, documents, textExtractionProgress);
+            for (int i = 0; i < documents.Count; i++)
+            {
+                var r = results.FirstOrDefault(x => x.FileId == documents [i].FileId);
+                if (r != null) { documents [i].ExtractedText = r.ExtractedText; documents [i].ExtractedTextPath = r.ExtractedTextPath; documents [i].TextExtractionStatus = r.TextExtractionStatus; documents [i].TextExtractionError = r.TextExtractionError; }
+            }
+        }
+        catch (Exception ex) { textExtractionError = $"Ошибка: {ex.Message}"; }
+        finally { isExtractingText = false; StateHasChanged(); }
+    }
+
+    // 👇 AI Логика
+    private async Task SendToAiAsync()
+    {
+        if (IsAiLoading || string.IsNullOrWhiteSpace(AiPrompt)) return;
+
+        // 1. Собираем тексты документов
+        var docsText = documents.Where(d => !string.IsNullOrEmpty(d.ExtractedText))
+                                .Select(d => $"📄 {d.FileName}:\n{d.ExtractedText}")
+                                .ToList();
+
+        if (docsText.Count == 0)
+        {
+            AiResponse = "⚠️ Нет извлечённого текста. Сначала нажмите «Извлечь текст».";
             StateHasChanged();
             return;
         }
 
-        isExtractingText = true;
-        textExtractionError = null;
-        totalExtractedChars = 0;
+        // 2. Сброс и подготовка
+        AiResponse = string.Empty;
+        IsAiLoading = true;
+        _aiCts?.Cancel();
+        _aiCts = new System.Threading.CancellationTokenSource();
+        var token = _aiCts.Token;
         StateHasChanged();
 
         try
         {
-            string? regNumber = ExtractRegNumber(record.Link);
-            if (string.IsNullOrEmpty(regNumber))
+            // 3. Настройки API
+            string? apiKey = Config ["Qwen:ApiKey"];
+            string? endpoint = Config ["Qwen:Endpoint"];
+            string? model = Config ["Qwen:Model"];
+
+            if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(endpoint))
             {
-                textExtractionError = "Не удалось определить номер закупки";
-                isExtractingText = false;
+                AiResponse = "❌ Не настроены API ключ или адрес в appsettings.json";
+                IsAiLoading = false;
                 StateHasChanged();
                 return;
             }
 
-            List<QwenWeb.Models.EisDocumentItem> results = await DocumentService.ExtractTextFromDocumentsAsync(
-                regNumber, documents, textExtractionProgress);
+            // 4. Формируем контекст
+            var tenderInfo = $"🔍 ТЕНДЕР: {ParsedInfo.ObjectName}\n" +
+                             $"🏢 Заказчик: {ParsedInfo.Customer}\n" +
+                             $"💰 Цена: {(ParsedInfo.InitialPrice.HasValue ? $"{ParsedInfo.InitialPrice.Value:N2} {ParsedInfo.Currency}" : "не указана")}\n" +
+                             $"⚖️ Закон: {ParsedInfo.LawType}\n";
 
-            for (int i = 0; i < documents.Count; i++)
+            var fullContext = tenderInfo + "\n📎 ДОКУМЕНТЫ:\n" + string.Join("\n\n---\n\n", docsText);
+
+            // 5. Запрос
+            using var handler = new System.Net.Http.HttpClientHandler
             {
-                QwenWeb.Models.EisDocumentItem? result = results.FirstOrDefault(r => r.FileId == documents[i].FileId);
-                if (result != null)
+                ServerCertificateCustomValidationCallback = System.Net.Http.HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            };
+            using var client = new System.Net.Http.HttpClient(handler);
+            client.Timeout = TimeSpan.FromMinutes(5);
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+
+            var payload = new
+            {
+                model = model,
+                messages = new [] {
+                    new { role = "system", content = "Ты эксперт по госзакупкам. Анализируй документы и отвечай кратко, по делу, на русском." },
+                    new { role = "user", content = $"Контекст:\n{fullContext}\n\nВопрос:\n{AiPrompt}" }
+                },
+                stream = true,
+                temperature = 0.3
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(payload);
+            using var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            // 6. Отправка и чтение потока
+            using var response = await client.PostAsync(endpoint, content, token);
+            response.EnsureSuccessStatusCode();
+
+            using var stream = await response.Content.ReadAsStreamAsync(token);
+            using var reader = new System.IO.StreamReader(stream);
+            var buffer = new System.Text.StringBuilder();
+
+            // Цикл чтения (с поддержкой отмены)
+            while (!reader.EndOfStream && !token.IsCancellationRequested && IsAiLoading)
+            {
+                var line = await reader.ReadLineAsync(token);
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith(":")) continue;
+                var trimmed = line.TrimStart();
+                if (!trimmed.StartsWith("data:")) continue; // Внимание: тут может быть "data: " с пробелом, проверяем Trim
+
+                var data = trimmed.Substring("data:".Length).Trim(); // Теперь реально удаляем "data:"
+                if (data == "[DONE]") break;
+
+                try
                 {
-                    documents[i].ExtractedText = result.ExtractedText;
-                    documents[i].ExtractedTextPath = result.ExtractedTextPath;
-                    documents[i].TextExtractionStatus = result.TextExtractionStatus;
-                    documents[i].TextExtractionError = result.TextExtractionError;
+                    using var doc = System.Text.Json.JsonDocument.Parse(data);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+                    {
+                        var delta = choices [0].GetProperty("delta");
+                        if (delta.TryGetProperty("content", out var c) && c.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            var tokenText = c.GetString();
+                            if (!string.IsNullOrEmpty(tokenText))
+                            {
+                                buffer.Append(tokenText);
+                                AiResponse = buffer.ToString();
+                                await InvokeAsync(StateHasChanged);
+                            }
+                        }
+                    }
                 }
+                catch { }
             }
+        }
+        catch (System.Threading.Tasks.TaskCanceledException)
+        {
+            AiResponse += "\n\n⚠️ Генерация остановлена.";
         }
         catch (Exception ex)
         {
-            textExtractionError = $"Ошибка: {ex.Message}";
+            AiResponse = $"❌ Ошибка: {ex.Message}";
         }
         finally
         {
-            isExtractingText = false;
+            IsAiLoading = false;
             StateHasChanged();
         }
+    }
+
+    private void FinishAiRequest()
+    {
+        IsAiLoading = false;
+        IsAiStreaming = false;
+        StateHasChanged();
+    }
+
+    private void CancelAiRequest()
+    {
+        _aiCts?.Cancel();
     }
 
     private static string? ExtractRegNumber(string? link)
@@ -485,21 +623,21 @@ else
 
     private void ToggleDocumentSelection(QwenWeb.Models.EisDocumentItem doc)
     {
-        if (selectedDocuments.Contains(doc)) { selectedDocuments.Remove(doc); }
-        else { selectedDocuments.Add(doc); }
+        if (selectedDocuments.Contains(doc)) selectedDocuments.Remove(doc);
+        else selectedDocuments.Add(doc);
         StateHasChanged();
     }
 
-    private string FormatDate(DateTime? dateTime) => dateTime?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
-    private string FormatDateUtc(DateTime? dateTimeUtc) => dateTimeUtc?.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
-
-    private string GetStageBadgeClass(string stage)
-    {
-        if (string.IsNullOrEmpty(stage)) return "bg-secondary";
-        return stage.Contains("Подача", System.StringComparison.OrdinalIgnoreCase) ? "bg-success" :
-               stage.Contains("Завершена", System.StringComparison.OrdinalIgnoreCase) ? "bg-secondary" :
-               stage.Contains("Отменена", System.StringComparison.OrdinalIgnoreCase) ? "bg-danger" : "bg-info";
-    }
-
+    private string FormatDate(DateTime? dt) => dt?.ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
+    private string FormatDateUtc(DateTime? dt) => dt?.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.CurrentCulture) ?? "Нет данных";
+    private string GetStageBadgeClass(string stage) => string.IsNullOrEmpty(stage) ? "bg-secondary" : stage.Contains("Подача", StringComparison.OrdinalIgnoreCase) ? "bg-success" : stage.Contains("Завершена", StringComparison.OrdinalIgnoreCase) ? "bg-secondary" : stage.Contains("Отменена", StringComparison.OrdinalIgnoreCase) ? "bg-danger" : "bg-info";
     private void GoBack() => NavigationManager.NavigateTo("/monitor");
+
+   
+
+    public void Dispose()
+    {
+        _aiCts?.Cancel();
+        _aiCts?.Dispose();
+    }
 }
