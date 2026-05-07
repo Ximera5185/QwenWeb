@@ -271,25 +271,19 @@ else
                     </div>
 
                     <!-- Шаблоны быстрых промтов -->
+                    <!-- Шаблоны быстрых промтов -->
                     <div class="mb-2">
                         <small class="text-muted d-block mb-1">📋 Быстрые вопросы:</small>
                         <div class="d-flex flex-wrap gap-1">
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    @onclick="() => SetPrompt(PromptRequirements)">
-                                📋 Требования
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    @onclick="() => SetPrompt(PromptDeadlines)">
-                                ⏱️ Сроки и штрафы
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    @onclick="() => SetPrompt(PromptRisks)">
-                                ⚠️ Риски
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    @onclick="() => SetPrompt(PromptSummary)">
-                                📄 Резюме
-                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetPrompt(PromptGoodsQty)">📦 Товары и объёмы</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetPrompt(PromptDeliveryTerms)">🚚 Поставка</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetPrompt(PromptQualityReqs)">✅ Качество</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetPrompt(PromptRisksPenalties)">⚠️ Риски</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetPrompt(PromptPaymentTerms)">💰 Оплата</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetPrompt(PromptKeyDates)">📅 Сроки</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetPrompt(PromptEvaluationCriteria)">⚖️ Критерии</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => SetPrompt(PromptExperienceReqs)">🎓 Опыт</button>
+                            <button type="button" class="btn btn-sm btn-outline-info" @onclick="() => SetPrompt(PromptSummary)">📝 Резюме</button>
                         </div>
                     </div>
 
@@ -397,7 +391,15 @@ else
     private const string PromptRequirements = "Выдели ключевые требования к поставщику и условия участия в закупке.";
     private const string PromptDeadlines = "Какие сроки поставки, исполнения контракта и штрафные санкции указаны?";
     private const string PromptRisks = "Есть ли в документации риски для поставщика? Выдели спорные моменты.";
-    private const string PromptSummary = "Составь краткое резюме тендера: предмет, цена, сроки, требования.";
+    private const string PromptGoodsQty = "Какие именно товары и в каком количестве необходимо поставить? Укажи номенклатуру, артикулы, ГОСТы/ТУ, классификаторы (ОКПД2) и единицы измерения.";
+    private const string PromptDeliveryTerms = "Каковы условия, сроки и место поставки? Включи график поставок, требования к упаковке, маркировке, транспортной таре и порядок приёмки.";
+    private const string PromptQualityReqs = "Какие требования к качеству товаров? Укажи необходимые сертификаты, декларации соответствия, гарантии, сроки годности и порядок замены бракованного товара.";
+    private const string PromptRisksPenalties = "Проанализируй документацию на скрытые риски, неочевидные штрафы, пени, неустойки, односторонние условия для поставщика и требования к форс-мажору.";
+    private const string PromptPaymentTerms = "Каковы финансовые условия контракта? Укажи размер аванса, график платежей, сроки оплаты после подписания актов, требования к обеспечению исполнения и банковской гарантии.";
+    private const string PromptKeyDates = "Выдели все важные сроки: дата окончания подачи заявок, разъяснения, вскрытие конвертов, заключение контракта, этапы исполнения, гарантия.";
+    private const string PromptEvaluationCriteria = "По каким критериям будет оцениваться заявка? Укажи вес ценового и неценового критерия, требования к опыту, квалификации, лицензиям/СРО и дополнительные баллы.";
+    private const string PromptSummary = "Составь краткое резюме тендера: предмет закупки, начальная цена, ключевые сроки, главные требования к поставщику и основные риски. Ответь структурированно.";
+    private const string PromptExperienceReqs = "Какие требования к опыту участника закупки указаны? Укажи необходимость наличия аналогичных исполненных контрактов, требования к СРО, лицензиям, допускам, квалификационным требованиям к персоналу и материально-технической базе.";
 
     private QwenWeb.Models.TenderMonitorRecord? record;
     private QwenWeb.Models.ParsedTenderInfo ParsedInfo = new();
