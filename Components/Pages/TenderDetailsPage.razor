@@ -1,6 +1,6 @@
 ﻿@page "/tender"
 @rendermode InteractiveServer
-@implements IDisposable  
+@implements IDisposable
 @using Microsoft.EntityFrameworkCore
 @using System.Linq
 @inject QwenWeb.Data.TenderMonitorDbContext Db
@@ -8,6 +8,8 @@
 @* @using QwenWeb.Models
 @using QwenWeb.Services.Parsing
 @using QwenWeb.Components *@
+
+
 
 @if (isLoading)
 {
@@ -268,6 +270,29 @@ else
                         }
                     </div>
 
+                    <!-- Шаблоны быстрых промтов -->
+                    <div class="mb-2">
+                        <small class="text-muted d-block mb-1">📋 Быстрые вопросы:</small>
+                        <div class="d-flex flex-wrap gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => SetPrompt(PromptRequirements)">
+                                📋 Требования
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => SetPrompt(PromptDeadlines)">
+                                ⏱️ Сроки и штрафы
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => SetPrompt(PromptRisks)">
+                                ⚠️ Риски
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    @onclick="() => SetPrompt(PromptSummary)">
+                                📄 Резюме
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Поле ввода промта -->
                     <textarea class="form-control mb-2"
                               rows="3"
@@ -365,9 +390,15 @@ else
         }
     }
 </style>
-  
 
+  
 @code {
+    // 👇 Тексты для быстрых промтов (вынесены, чтобы не ломать парсер Razor)
+    private const string PromptRequirements = "Выдели ключевые требования к поставщику и условия участия в закупке.";
+    private const string PromptDeadlines = "Какие сроки поставки, исполнения контракта и штрафные санкции указаны?";
+    private const string PromptRisks = "Есть ли в документации риски для поставщика? Выдели спорные моменты.";
+    private const string PromptSummary = "Составь краткое резюме тендера: предмет, цена, сроки, требования.";
+
     private QwenWeb.Models.TenderMonitorRecord? record;
     private QwenWeb.Models.ParsedTenderInfo ParsedInfo = new();
     private bool isLoading = true;
@@ -633,7 +664,12 @@ else
     private string GetStageBadgeClass(string stage) => string.IsNullOrEmpty(stage) ? "bg-secondary" : stage.Contains("Подача", StringComparison.OrdinalIgnoreCase) ? "bg-success" : stage.Contains("Завершена", StringComparison.OrdinalIgnoreCase) ? "bg-secondary" : stage.Contains("Отменена", StringComparison.OrdinalIgnoreCase) ? "bg-danger" : "bg-info";
     private void GoBack() => NavigationManager.NavigateTo("/monitor");
 
-   
+    // 👇 Вспомогательный метод для шаблонов промтов
+    private void SetPrompt(string template)
+    {
+        AiPrompt = template;
+        StateHasChanged();
+    }
 
     public void Dispose()
     {
