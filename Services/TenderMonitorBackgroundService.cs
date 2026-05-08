@@ -49,21 +49,6 @@ public class TenderMonitorBackgroundService : BackgroundService
     }
 
     // Constructor
-    public TenderMonitorBackgroundService(IServiceScopeFactory scopeFactory, ILogger<TenderMonitorBackgroundService> logger)
-    {
-        _scopeFactory = scopeFactory;
-        _logger = logger;
-    }
-
-    // Public Methods
-
-    public void ResetDelay()
-    {
-        lock (_delayLock)
-        {
-            _delayCts?.Cancel();
-        }
-    }
     public TenderMonitorBackgroundService(
     IServiceScopeFactory scopeFactory,
     ILogger<TenderMonitorBackgroundService> logger,
@@ -72,6 +57,16 @@ public class TenderMonitorBackgroundService : BackgroundService
         _scopeFactory = scopeFactory;
         _logger = logger;
         _settings = settings;
+    }
+   
+    // Public Methods
+
+    public void ResetDelay()
+    {
+        lock (_delayLock)
+        {
+            _delayCts?.Cancel();
+        }
     }
 
     public async Task RunManualAsync()

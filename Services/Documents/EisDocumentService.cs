@@ -686,12 +686,12 @@ public class EisDocumentService
     }
 
     private async Task<string?> ExtractTextFromArchiveAsync(
-        string filePath,
-        EisDocumentItem doc,
-        IProgress<EisDocumentItem>? progress,
-        CancellationToken cancellationToken)
+     string filePath,
+     EisDocumentItem doc,
+     IProgress<EisDocumentItem>? progress,
+     CancellationToken cancellationToken)
     {
-        return await Task.Run(() =>
+        return await Task.Run(async () =>
         {
             try
             {
@@ -705,17 +705,20 @@ public class EisDocumentService
 
                 StringBuilder textBuilder = new StringBuilder();
                 string[] files = Directory.GetFiles(extractDir, "*.*", SearchOption.AllDirectories);
-
                 int processedFiles = 0;
+
                 foreach (string file in files)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     string ext = Path.GetExtension(file).ToLowerInvariant();
                     if (ext is ".txt" or ".docx" or ".odt" or ".pdf" or ".xlsx")
                     {
-                        string? fileText = ExtractTextFromFileAsync(file, doc, progress, cancellationToken).Result;
+                        // ✅ await вместо .Result (устраняет дедлок)
+                        string? fileText = await ExtractTextFromFileAsync(file, doc, progress, cancellationToken);
                         if (!string.IsNullOrEmpty(fileText))
                         {
-                            textBuilder.AppendLine($"\n=== {Path.GetFileName(file)} ===");
+                            textBuilder.AppendLine($"=== {Path.GetFileName(file)} ===");
                             textBuilder.AppendLine(fileText);
                         }
                     }
@@ -727,8 +730,11 @@ public class EisDocumentService
                         progress?.Report(doc);
                     }
                 }
-
                 return CleanExtractedText(textBuilder.ToString());
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
             }
             catch (Exception ex)
             {

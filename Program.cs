@@ -36,58 +36,5 @@ var app = builder.Build();
 
 app.UseStaticFiles();
 app.UseAntiforgery(); // Обязательно для форм
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
-
-
-// 🔹 Тест Этапа 2: получение списка документов
-
-// 🔹 Тест Этапа 2: получение списка документов
-
-// 🔹 Тест мини-Этапа 2.1: извлечение noticeInfoId
-
-// 🔹 Тест мини-Этапа 2.2: получение списка документов
-
-using var scope = app.Services.CreateScope();
-var dbContext = scope.ServiceProvider.GetRequiredService<QwenWeb.Data.TenderMonitorDbContext>();
-var firstRecord = await dbContext.Tenders.FirstOrDefaultAsync(t => !string.IsNullOrEmpty(t.Link));
-
-if (firstRecord != null)
-{
-    ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-    ILogger<EisDocumentService> logger = loggerFactory.CreateLogger<EisDocumentService>();
-    HttpClient httpClient = new HttpClient();
-
-    EisDocumentService testService = new EisDocumentService(httpClient, logger);
-
-    Console.WriteLine($"\n🔍 Тестируем для закупки: {firstRecord.Title}");
-    Console.WriteLine($"🔗 Ссылка: {firstRecord.Link}\n");
-
-    // 1. Сначала получаем noticeInfoId
-    QwenWeb.Models.NoticeInfoResult? noticeInfo = await testService.GetNoticeInfoIdAsync(firstRecord.Link);
-
-    if (noticeInfo == null || !noticeInfo.IsValid)
-    {
-        Console.WriteLine("⚠️ Не удалось получить noticeInfoId");
-    }
-    else
-    {
-        Console.WriteLine($"✅ noticeInfoId={noticeInfo.NoticeInfoId}, lawType={noticeInfo.LawType}");
-
-        // 2. Получаем список документов
-        List<QwenWeb.Models.EisDocumentItem> docs = await testService.GetDocumentListAsync(firstRecord.Link);
-
-        Console.WriteLine($"\n📄 Найдено документов: {docs.Count}");
-        foreach (QwenWeb.Models.EisDocumentItem doc in docs)
-        {
-            Console.WriteLine($"  • {doc.FileName} | ID: {doc.FileId} | ZIP: {doc.IsArchive}");
-            Console.WriteLine($"    URL: {doc.DownloadUrl}");
-        }
-    }
-    Console.WriteLine();
-}
-else
-{
-    Console.WriteLine("⚠️ База пуста, нечего тестировать");
-}
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.Run();
