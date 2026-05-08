@@ -314,60 +314,7 @@ var app = builder.Build();
 
 app.UseStaticFiles();
 app.UseAntiforgery(); // Обязательно для форм
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
-
-
-// 🔹 Тест Этапа 2: получение списка документов
-
-// 🔹 Тест Этапа 2: получение списка документов
-
-// 🔹 Тест мини-Этапа 2.1: извлечение noticeInfoId
-
-// 🔹 Тест мини-Этапа 2.2: получение списка документов
-
-using var scope = app.Services.CreateScope();
-var dbContext = scope.ServiceProvider.GetRequiredService<QwenWeb.Data.TenderMonitorDbContext>();
-var firstRecord = await dbContext.Tenders.FirstOrDefaultAsync(t => !string.IsNullOrEmpty(t.Link));
-
-if (firstRecord != null)
-{
-    ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-    ILogger<EisDocumentService> logger = loggerFactory.CreateLogger<EisDocumentService>();
-    HttpClient httpClient = new HttpClient();
-
-    EisDocumentService testService = new EisDocumentService(httpClient, logger);
-
-    Console.WriteLine($"\n🔍 Тестируем для закупки: {firstRecord.Title}");
-    Console.WriteLine($"🔗 Ссылка: {firstRecord.Link}\n");
-
-    // 1. Сначала получаем noticeInfoId
-    QwenWeb.Models.NoticeInfoResult? noticeInfo = await testService.GetNoticeInfoIdAsync(firstRecord.Link);
-
-    if (noticeInfo == null || !noticeInfo.IsValid)
-    {
-        Console.WriteLine("⚠️ Не удалось получить noticeInfoId");
-    }
-    else
-    {
-        Console.WriteLine($"✅ noticeInfoId={noticeInfo.NoticeInfoId}, lawType={noticeInfo.LawType}");
-
-        // 2. Получаем список документов
-        List<QwenWeb.Models.EisDocumentItem> docs = await testService.GetDocumentListAsync(firstRecord.Link);
-
-        Console.WriteLine($"\n📄 Найдено документов: {docs.Count}");
-        foreach (QwenWeb.Models.EisDocumentItem doc in docs)
-        {
-            Console.WriteLine($"  • {doc.FileName} | ID: {doc.FileId} | ZIP: {doc.IsArchive}");
-            Console.WriteLine($"    URL: {doc.DownloadUrl}");
-        }
-    }
-    Console.WriteLine();
-}
-else
-{
-    Console.WriteLine("⚠️ База пуста, нечего тестировать");
-}
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.Run();
 
 
@@ -380,6 +327,12 @@ app.Run();
 Все новые фитчи мы с тобой пишим не спеша, тоесть разбиваем на этапы, тестируем, испровляем ошибки если они есть опять тестируем и только потом
 переходим к следующему этапу. При получении тобой этого текста для восстановления контекста ты просишь у меня скинуть фаил
 project_context.txt посдежней версии, в нем будут собраны все скрипты для того чтоб ты наполнята свой контекст.
+
+set-executionpolicy -scope process -executionpolicy bypass -force
+.\collect.ps1
+
+
+collect.ps1 Должен быть создан в корне, в нем скрипт для терминала
 
 
 ### File: QwenWeb.csproj ###
@@ -508,170 +461,6 @@ project_context.txt посдежней версии, в нем будут соб
         if (element) element.scrollTop = element.scrollHeight;
     };
 </script>
-
-<style>
-    .cyber-console {
-        position: fixed;
-        top: 0px;
-        right: 2px;
-        width: 480px;
-        background: #0a0f14;
-        border: 1px solid #00ffcc44;
-        border-radius: 6px;
-        font-family: 'Consolas', 'Courier New', monospace;
-        color: #00ffcc;
-        overflow: hidden;
-        box-shadow: 0 4px 20px #00ffcc11;
-        z-index: 1000;
-        backdrop-filter: blur(4px);
-    }
-
-    .console-header {
-        background: #111820;
-        padding: 5px 8px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        border-bottom: 1px solid #00ffcc33;
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .badge-status {
-        background: #00ffcc22;
-        padding: 1px 5px;
-        border-radius: 3px;
-        font-size: 0.65rem;
-    }
-
-    .console-leds {
-        display: flex;
-        gap: 12px;
-        padding: 4px 8px;
-        background: #0d1217;
-        border-bottom: 1px solid #00ffcc22;
-    }
-
-    .led-row {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.6rem;
-        color: #ffffffaa;
-    }
-
-    .led-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        box-shadow: 0 0 4px currentColor;
-    }
-
-    .console-meta {
-        display: flex;
-        justify-content: space-between;
-        padding: 3px 8px;
-        font-size: 0.65rem;
-        color: #00b8ff;
-        background: #080b0e;
-        border-bottom: 1px dashed #00ffcc22;
-    }
-
-    .console-logs {
-        height: 120px;
-        overflow-y: auto;
-        padding: 5px;
-        background: #05080a;
-        scrollbar-width: thin;
-        scrollbar-color: #00ffcc44 #05080a;
-    }
-
-    .log-line {
-        font-size: 0.75rem;
-        margin: 1px 0;
-        white-space: pre-wrap;
-        line-height: 1.3;
-        opacity: 0.9;
-    }
-
-    .log-SYS {
-        color: #00ffcc;
-    }
-
-    .log-NET {
-        color: #ffcc00;
-    }
-
-    .log-DB {
-        color: #00ff88;
-    }
-
-    .log-SEC {
-        color: #cc88ff;
-    }
-
-    .log-ERR {
-        color: #ff4444;
-    }
-
-    .cursor-blink {
-        display: inline-block;
-        font-size: 0.65em; /* 👈 Уменьшает курсор относительно текста логов */
-        vertical-align: middle;
-        animation: blink 1s step-end infinite;
-    }
-    @@keyframes blink {
-        50% {
-            opacity: 0;
-        }
-    }
-
-    .console-metrics {
-        display: flex;
-        justify-content: space-between;
-        padding: 4px 8px;
-        font-size: 0.7rem;
-        background: #0d1217;
-        border-top: 1px solid #00ffcc33;
-        gap: 4px;
-    }
-
-    .metric-group {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex: 1;
-    }
-
-    .sparkline {
-        display: flex;
-        align-items: flex-end;
-        height: 12px;
-        gap: 1px;
-        margin: 2px 0;
-    }
-
-    .spark-bar {
-        width: 3px;
-        background: linear-gradient(90deg, #00ffcc, #00b8ff);
-        border-radius: 1px;
-        transition: height 0.3s ease;
-    }
-
-    .metric-val {
-        color: #ffffffcc;
-    }
-
-    .scanlines {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: repeating-linear-gradient( to bottom, transparent 0px, transparent 2px, rgba(0, 255, 204, 0.03) 2px, rgba(0, 255, 204, 0.03) 4px );
-        pointer-events: none;
-        z-index: 2;
-    }
-</style>
 
 @code {
     private readonly List<LogEntry> logs = new List<LogEntry>();
@@ -2581,21 +2370,6 @@ public class TenderMonitorBackgroundService : BackgroundService
     }
 
     // Constructor
-    public TenderMonitorBackgroundService(IServiceScopeFactory scopeFactory, ILogger<TenderMonitorBackgroundService> logger)
-    {
-        _scopeFactory = scopeFactory;
-        _logger = logger;
-    }
-
-    // Public Methods
-
-    public void ResetDelay()
-    {
-        lock (_delayLock)
-        {
-            _delayCts?.Cancel();
-        }
-    }
     public TenderMonitorBackgroundService(
     IServiceScopeFactory scopeFactory,
     ILogger<TenderMonitorBackgroundService> logger,
@@ -2604,6 +2378,16 @@ public class TenderMonitorBackgroundService : BackgroundService
         _scopeFactory = scopeFactory;
         _logger = logger;
         _settings = settings;
+    }
+   
+    // Public Methods
+
+    public void ResetDelay()
+    {
+        lock (_delayLock)
+        {
+            _delayCts?.Cancel();
+        }
     }
 
     public async Task RunManualAsync()
@@ -3482,12 +3266,12 @@ public class EisDocumentService
     }
 
     private async Task<string?> ExtractTextFromArchiveAsync(
-        string filePath,
-        EisDocumentItem doc,
-        IProgress<EisDocumentItem>? progress,
-        CancellationToken cancellationToken)
+     string filePath,
+     EisDocumentItem doc,
+     IProgress<EisDocumentItem>? progress,
+     CancellationToken cancellationToken)
     {
-        return await Task.Run(() =>
+        return await Task.Run(async () =>
         {
             try
             {
@@ -3501,17 +3285,20 @@ public class EisDocumentService
 
                 StringBuilder textBuilder = new StringBuilder();
                 string[] files = Directory.GetFiles(extractDir, "*.*", SearchOption.AllDirectories);
-
                 int processedFiles = 0;
+
                 foreach (string file in files)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
+
                     string ext = Path.GetExtension(file).ToLowerInvariant();
                     if (ext is ".txt" or ".docx" or ".odt" or ".pdf" or ".xlsx")
                     {
-                        string? fileText = ExtractTextFromFileAsync(file, doc, progress, cancellationToken).Result;
+                        // ✅ await вместо .Result (устраняет дедлок)
+                        string? fileText = await ExtractTextFromFileAsync(file, doc, progress, cancellationToken);
                         if (!string.IsNullOrEmpty(fileText))
                         {
-                            textBuilder.AppendLine($"\n=== {Path.GetFileName(file)} ===");
+                            textBuilder.AppendLine($"=== {Path.GetFileName(file)} ===");
                             textBuilder.AppendLine(fileText);
                         }
                     }
@@ -3523,8 +3310,11 @@ public class EisDocumentService
                         progress?.Report(doc);
                     }
                 }
-
                 return CleanExtractedText(textBuilder.ToString());
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
             }
             catch (Exception ex)
             {

@@ -1,0 +1,163 @@
+﻿/* FuturisticConsole.razor.css */
+.cyber-console {
+    position: fixed;
+    top: 0px;
+    right: 2px;
+    width: 480px;
+    background: #0a0f14;
+    border: 1px solid #00ffcc44;
+    border-radius: 6px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    color: #00ffcc;
+    overflow: hidden;
+    box-shadow: 0 4px 20px #00ffcc11;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.console-header {
+    background: #111820;
+    padding: 5px 8px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border-bottom: 1px solid #00ffcc33;
+    display: flex;
+    justify-content: space-between;
+}
+
+.badge-status {
+    background: #00ffcc22;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.65rem;
+}
+
+.console-leds {
+    display: flex;
+    gap: 12px;
+    padding: 4px 8px;
+    background: #0d1217;
+    border-bottom: 1px solid #00ffcc22;
+}
+
+.led-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.6rem;
+    color: #ffffffaa;
+}
+
+.led-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    box-shadow: 0 0 4px currentColor;
+}
+
+.console-meta {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 8px;
+    font-size: 0.65rem;
+    color: #00b8ff;
+    background: #080b0e;
+    border-bottom: 1px dashed #00ffcc22;
+}
+
+.console-logs {
+    height: 120px;
+    overflow-y: auto;
+    padding: 5px;
+    background: #05080a;
+    scrollbar-width: thin;
+    scrollbar-color: #00ffcc44 #05080a;
+}
+
+.log-line {
+    font-size: 0.75rem;
+    margin: 1px 0;
+    white-space: pre-wrap;
+    line-height: 1.3;
+    opacity: 0.9;
+}
+
+.log-SYS {
+    color: #00ffcc;
+}
+
+.log-NET {
+    color: #ffcc00;
+}
+
+.log-DB {
+    color: #00ff88;
+}
+
+.log-SEC {
+    color: #cc88ff;
+}
+
+.log-ERR {
+    color: #ff4444;
+}
+
+.cursor-blink {
+    display: inline-block;
+    font-size: 0.65em;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+.console-metrics {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    background: #0d1217;
+    border-top: 1px solid #00ffcc33;
+    gap: 4px;
+}
+
+.metric-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+}
+
+.sparkline {
+    display: flex;
+    align-items: flex-end;
+    height: 12px;
+    gap: 1px;
+    margin: 2px 0;
+}
+
+.spark-bar {
+    width: 3px;
+    background: linear-gradient(90deg, #00ffcc, #00b8ff);
+    border-radius: 1px;
+    transition: height 0.3s ease;
+}
+
+.metric-val {
+    color: #ffffffcc;
+}
+
+.scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient( to bottom, transparent 0px, transparent 2px, rgba(0, 255, 204, 0.03) 2px, rgba(0, 255, 204, 0.03) 4px );
+    pointer-events: none;
+    z-index: 2;
+}
