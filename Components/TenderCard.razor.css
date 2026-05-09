@@ -1,0 +1,12 @@
+﻿.tender-card-card {
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+    .tender-card-card:hover {
+        transform: scale(1.01);
+    }
+
+.tender-card-title {
+    max-width: 75%;
+}

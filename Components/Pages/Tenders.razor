@@ -32,7 +32,7 @@ else if (Items?.Any() == true)
                     <h6 class="mb-1">@item.Title</h6>
                     <small class="text-muted">@item.PubDate?.ToString("dd.MM.yyyy HH:mm")</small>
                 </div>
-                <p class="mb-1 text-secondary" style="font-size: 0.9rem;">
+                <p class="mb-1 text-secondary description-text">
                     @((MarkupString)item.Description)
                 </p>
             </a>

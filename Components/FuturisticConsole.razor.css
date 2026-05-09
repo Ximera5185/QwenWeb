@@ -161,3 +161,6 @@
     pointer-events: none;
     z-index: 2;
 }
+.led-db-static {
+    background-color: #00ffcc;
+}
