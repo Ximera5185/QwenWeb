@@ -1,0 +1,42 @@
+🔧 ЗАПРОС НА ВОССТАНОВЛЕНИЕ: Скачивание документов с ЕИС сломалось
+
+Контекст:
+- Проект: QwenWeb (.NET 8, Blazor Server)
+- Источник: zakupki.gov.ru (ЕИС)
+- Сервис: EisDocumentService.cs
+- Проблема: Не скачиваются документы с ЕИС (403 / капча / не находит ссылку)
+
+Что уже пробовали (история правок):
+1. Добавили CookieContainer + браузерные заголовки в HttpClient
+2. Обновили регулярки в ParseNoticeInfo() под структуру с /view/
+3. Поменяли регистрацию сервиса на Singleton (не AddHttpClient)
+4. Добавили параметр procurementUrl для Referer при скачивании файлов
+
+Текущая рабочая структура ЕИС (на момент фикса):
+- Ссылка на документы: /epz/order/notice/{lawType}/view/documents.html?regNumber={REG}
+- Ссылка на файл: /44fz/filestore/public/1.0/download/priz/file.html?uid={UID}
+- Требуемые заголовки: User-Agent, Referer, Accept, Sec-Fetch-*
+- Требуется сессия: куки должны сохраняться между запросами
+
+Что нужно сделать:
+1. Проверить, не изменилась ли структура HTML/URL на ЕИС (открыть карточку тендера в браузере → посмотреть ссылку «Документы»)
+2. Если изменилась — обновить регулярки в ParseNoticeInfo() под новый формат
+3. Убедиться, что в логах есть: «✅ Найдена ссылка с regNumber=..., lawType=...»
+4. Если скачивание даёт 403 — проверить, что:
+   - Используется единый HttpClient с CookieContainer
+   - Добавлен заголовок Referer со ссылкой на страницу тендера
+   - Заголовки User-Agent/Sec-Fetch-* совпадают с браузером
+5. Протестировать пайплайн: /monitor → /tender → «Загрузить список» → «Скачать»
+
+Файлы для проверки:
+- Services/Documents/EisDocumentService.cs (основная логика)
+- Program.cs (регистрация сервиса)
+- Components/Pages/TenderDetailsPage.razor (вызов DownloadFilesAsync)
+
+Лог для отладки (включить Debug для сервиса):
+"QwenWeb.Services.Documents.EisDocumentService": "Debug"
+
+Ожидаемый результат:
+- В логах: «✅ Найдена ссылка...», «Найдено документов: N», «Скачан файл: ...»
+- Файлы появляются в: Storage/Tenders/{regNumber}/raw/
+- UI показывает прогресс и статус «✓ Скачан»

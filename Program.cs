@@ -41,7 +41,7 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<TenderplanBackgrou
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddHttpClient<QwenWeb.Services.Documents.EisDocumentService>();
+builder.Services.AddSingleton<QwenWeb.Services.Documents.EisDocumentService>();
 
 var app = builder.Build();
 

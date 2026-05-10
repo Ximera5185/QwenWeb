@@ -429,7 +429,7 @@ else
         {
             string? regNumber = ExtractRegNumber(record.Link);
             if (string.IsNullOrEmpty(regNumber)) { downloadError = "Не удалось определить номер закупки"; isDownloading = false; StateHasChanged(); return; }
-            var results = await DocumentService.DownloadFilesAsync(regNumber, selectedDocuments, downloadProgress);
+            var results = await DocumentService.DownloadFilesAsync(regNumber, selectedDocuments, downloadProgress, procurementUrl: record?.Link);
             for (int i = 0; i < documents.Count; i++)
             {
                 var r = results.FirstOrDefault(x => x.FileId == documents[i].FileId);
