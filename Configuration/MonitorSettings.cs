@@ -10,7 +10,7 @@ public class MonitorSettings
     public string RssUrl { get; set; } = string.Empty;
     public int HttpClientTimeoutMinutes { get; set; } = 2;
     public int DatabaseCommandTimeoutSeconds { get; set; } = 30;
-
+    public bool AutoLoadDocuments { get; set; } = false;
     public int PollIntervalMinutes
     {
         get { lock (_lock) return _pollIntervalMinutes; }

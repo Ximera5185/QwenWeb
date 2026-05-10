@@ -24,4 +24,11 @@ public class EisDocumentItem
     public double TextExtractionProgress { get; set; } // 0.0 - 1.0
     public string? TextExtractionStatus { get; set; } // pending | extracting | extracted | error
     public string? TextExtractionError { get; set; }
+
+    // 🔹 Поля для логики повторов
+    public int RetryCount { get; set; } = 0;
+    public DateTime? LastRetryAt { get; set; }
+    public bool CanRetry => RetryCount < 3 && (LastRetryAt == null || DateTime.UtcNow - LastRetryAt > TimeSpan.FromSeconds(10));
+
+
 }

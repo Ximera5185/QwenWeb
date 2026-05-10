@@ -170,12 +170,12 @@ else
                                                 }
                                             </td>
                                             <td class="col-status">
-                                                @if (doc.Status == "downloading")
+                                                @if (doc.Status == "downloading" || (doc.Status == "pending" && isRetrying))
                                                 {
                                                     <div class="progress progress-thin">
-                                                        <div class="progress-bar" style="width: @(doc.DownloadProgress * 100)%"></div>
+                                                        <div class="progress-bar" style="width: @($"{doc.DownloadProgress * 100:F0}")%"></div>
                                                     </div>
-                                                    <small class="text-muted">@((doc.DownloadProgress * 100).ToString("F0"))%</small>
+                                                    <small class="text-muted">@(string.Format("{0:F0}", doc.DownloadProgress * 100)) %</small>
                                                 }
                                                 else if (doc.Status == "downloaded")
                                                 {
@@ -183,7 +183,23 @@ else
                                                 }
                                                 else if (doc.Status == "error")
                                                 {
-                                                    <span class="badge bg-danger" title="@doc.ErrorMessage">✗</span>
+                                                    <div class="d-flex flex-column gap-1">
+                                                        <span class="badge bg-danger" title="@doc.ErrorMessage">✗ Ошибка</span>
+                                                        @if (doc.CanRetry)
+                                                        {
+                                                            <button class="btn btn-xs btn-outline-secondary"
+                                                                    @onclick="@(async () => await RetrySingleFileAsync(doc))"
+                                                                    disabled="@(isDownloading || isRetrying)">
+                                                                ↻ Повтор
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <small class="text-muted" title="Достигнуто макс. попыток">
+                                                                (предел попыток)
+                                                            </small>
+                                                        }
+                                                    </div>
                                                 }
                                                 else
                                                 {
@@ -193,7 +209,8 @@ else
                                                 @if (doc.TextExtractionStatus == "extracting")
                                                 {
                                                     <div class="progress mt-1 progress-ultra-thin">
-                                                    <div class="progress-bar bg-success" style="width: @(doc.TextExtractionProgress * 100)%"></div></div>
+                                                        <div class="progress-bar bg-success" style="width: @($"{doc.TextExtractionProgress * 100:F0}")%"></div>
+                                                    </div>
                                                 }
                                                 else if (doc.TextExtractionStatus == "extracted")
                                                 {
@@ -207,6 +224,7 @@ else
                         </div>
 
                         <!-- Кнопки действий (Этапы 4 и 5) -->
+                        <!-- Кнопки действий (Этапы 4 и 5) -->
                         <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top flex-wrap gap-2">
                             <small class="text-muted">
                                 Выбрано: @selectedDocuments.Count из @documents.Count
@@ -218,11 +236,34 @@ else
                                 {
                                     <span class="text-danger ms-2">⚠️ @textExtractionError</span>
                                 }
+                                <!-- Показываем счётчик ошибок -->
+                                @if (documents.Count(d => d.Status == "error") > 0)
+                                {
+                                    <span class="text-warning ms-2">⚠️ Не загружено: @documents.Count(d => d.Status == "error")</span>
+                                }
                             </small>
                             <div class="d-flex gap-2">
+                                <!-- Кнопка повтора всех неудачных -->
+                                @if (documents.Any(d => d.Status == "error" && d.CanRetry))
+                                {
+                                    <button class="btn btn-sm btn-outline-warning"
+                                            @onclick="RetryFailedDownloadsAsync"
+                                            disabled="@(isDownloading || isRetrying)">
+                                        @if (isRetrying)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                            <span>Повтор...</span>
+                                        }
+                                        else
+                                        {
+                                            <span>↻ Повторить неудачные (@documents.Count(d => d.Status == "error" && d.CanRetry))</span>
+                                        }
+                                    </button>
+                                }
+                                <!-- Основная кнопка скачивания -->
                                 <button class="btn btn-sm btn-primary"
                                         @onclick="StartDownloadAsync"
-                                        disabled="@(isDownloading || selectedDocuments.Count == 0)">
+                                        disabled="@(isDownloading || isRetrying || selectedDocuments.Count == 0)">
                                     @if (isDownloading)
                                     {
                                         <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -233,7 +274,7 @@ else
                                         <span>📥 Скачать (@selectedDocuments.Count)</span>
                                     }
                                 </button>
-
+                                <!-- Кнопка извлечения текста -->
                                 <button class="btn btn-sm btn-success"
                                         @onclick="StartTextExtractionAsync"
                                         disabled="@(isExtractingText || documentListState != DocumentListState.Ready || documents.Count == 0)">
@@ -244,7 +285,7 @@ else
                                     }
                                     else
                                     {
-                                        <span> Извлечь текст</span>
+                                        <span>📄 Извлечь текст</span>
                                     }
                                 </button>
                             </div>
@@ -368,6 +409,7 @@ else
 
     private List<QwenWeb.Models.EisDocumentItem> selectedDocuments = new();
     private bool isDownloading = false;
+    private bool isRetrying = false;
     private string? downloadError;
     private readonly Progress<QwenWeb.Models.EisDocumentItem> downloadProgress = new();
 
@@ -378,6 +420,7 @@ else
 
     // 👇 AI-Аналитика (Шаг 2)
     [Inject] public IConfiguration Config { get; set; } = null!;
+    [Inject] public QwenWeb.Configuration.MonitorSettings? MonitorSettings { get; set; }
     private string AiPrompt { get; set; } = string.Empty;
     private string AiResponse { get; set; } = string.Empty;
     private bool IsAiLoading { get; set; }
@@ -407,11 +450,44 @@ else
             if (record != null)
             {
                 ParsedInfo = QwenWeb.Services.Parsing.TenderInfoParser.Parse(record.Description);
+                // 🔹 ВАРИАНТ А: Автозагрузка списка документов при открытии страницы
+                // (fire-and-forget, чтобы не блокировать отрисовку)
+                if (MonitorSettings?.AutoLoadDocuments == true)
+                {
+                    _ = LoadDocumentListAsync();
+                }
             }
         }
         isLoading = false;
+        StateHasChanged(); // 🔹 Важно: обновить UI после загрузки данных
     }
+    // 👇 Вспомогательный метод: повтор загрузки одного файла
+    private async Task RetrySingleFileAsync(Models.EisDocumentItem doc)
+    {
+        if (record == null) return;
 
+        doc.Status = "pending";
+        doc.ErrorMessage = null;
+        StateHasChanged();
+
+        string? regNumber = ExtractRegNumber(record.Link);
+        if (string.IsNullOrEmpty(regNumber)) return;
+
+        var results = await DocumentService.DownloadFilesAsync(
+                    regNumber,
+                    new List<Models.EisDocumentItem> { doc },
+                    downloadProgress,
+                    procurementUrl: record?.Link);
+
+        var updated = results.FirstOrDefault(r => r.FileId == doc.FileId);
+        if (updated != null)
+        {
+            doc.Status = updated.Status;
+            doc.LocalPath = updated.LocalPath;
+            doc.ErrorMessage = updated.ErrorMessage;
+        }
+        StateHasChanged();
+    }
     private async Task LoadDocumentListAsync()
     {
         if (record == null || string.IsNullOrEmpty(record.Link)) { documentListError = "Нет ссылки на закупку"; documentListState = DocumentListState.Error; StateHasChanged(); return; }
@@ -626,6 +702,63 @@ else
     {
         AiPrompt = template;
         StateHasChanged();
+    }
+
+    // 👇 Новый метод: повторная загрузка неудачных файлов
+    private async Task RetryFailedDownloadsAsync()
+    {
+        if (record == null || documents.All(d => d.Status != "error"))
+        {
+            downloadError = "Нет файлов для повторной загрузки";
+            StateHasChanged();
+            return;
+        }
+
+        isRetrying = true;
+        downloadError = null;
+        StateHasChanged();
+
+        try
+        {
+            string? regNumber = ExtractRegNumber(record.Link);
+            if (string.IsNullOrEmpty(regNumber))
+            {
+                downloadError = "Не удалось определить номер закупки";
+                isRetrying = false;
+                StateHasChanged();
+                return;
+            }
+
+            // Вызываем новый метод сервиса для повтора
+            var results = await DocumentService.RetryFailedDownloadsAsync(
+                regNumber,
+                documents,
+                downloadProgress,
+                procurementUrl: record?.Link);
+
+            // Обновляем локальный список
+            for (int i = 0; i < documents.Count; i++)
+            {
+                var r = results.FirstOrDefault(x => x.FileId == documents[i].FileId);
+                if (r != null)
+                {
+                    documents[i].Status = r.Status;
+                    documents[i].LocalPath = r.LocalPath;
+                    documents[i].ErrorMessage = r.ErrorMessage;
+                    documents[i].RetryCount = r.RetryCount;
+                    documents[i].LastRetryAt = r.LastRetryAt;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            downloadError = $"Ошибка при повторе: {ex.Message}";
+        }
+        finally
+        {
+            isRetrying = false;
+            StateHasChanged();
+        }
     }
 
     public void Dispose()
