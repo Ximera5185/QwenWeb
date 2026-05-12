@@ -1,10 +1,13 @@
 ﻿@page "/tender"
 @rendermode InteractiveServer
 @implements IDisposable
+@using QwenWeb.Models
+@using QwenWeb.Services.Documents
 @using Microsoft.EntityFrameworkCore
 @using System.Linq
 @inject QwenWeb.Data.TenderMonitorDbContext Db
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+@inject Microsoft.Extensions.Logging.ILogger<TenderDetailsPage> Logger 
 
 
 @if (isLoading)
@@ -72,6 +75,98 @@ else
                     <div class="p-3 bg-light rounded small tender-rss-content rss-description">
                         @((MarkupString)(ParsedInfo.RawDescription ?? string.Empty))
                     </div>
+                </div>
+
+                <!-- 📄 Извещение о проведении аукциона (новый блок) -->
+                <div class="mt-3 p-3 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-bold">📄 Извещение о проведении аукциона</h6>
+                        @if (noticeItemState == NoticeItemState.Idle)
+                        {
+                            <button class="btn btn-sm btn-outline-info"
+                                    @onclick="LoadNoticeAsync"
+                                    disabled="@(isLoading || record == null || noticeItemState == NoticeItemState.Loading)">
+                                @if (noticeItemState == NoticeItemState.Loading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                }
+                                🔍 Загрузить Извещение
+                            </button>
+                        }
+                        else if (noticeItemState == NoticeItemState.Loading)
+                        {
+                            <span class="spinner-border spinner-border-sm text-info" role="status"></span>
+                        }
+                        else if (noticeItemState == NoticeItemState.Ready && noticeItem != null)
+                        {
+                            <span class="badge bg-success">✓ Найдено</span>
+                        }
+                    </div>
+
+                    @if (noticeItemState == NoticeItemState.Error)
+                    {
+                        <div class="alert alert-warning small mb-0">
+                            ⚠️ @noticeItemError
+                            <button class="btn btn-link p-0 ms-2" @onclick="LoadNoticeAsync">Повторить</button>
+                        </div>
+                    }
+                    else if (noticeItemState == NoticeItemState.Ready && noticeItem != null)
+                    {
+                        <div class="table-responsive small">
+                            <table class="table table-sm table-borderless mb-0">
+                                <thead class="text-muted">
+                                    <tr>
+                                        <th class="col-filename">Файл</th>
+                                        <th>Тип</th>
+                                        <th>Статус</th>
+                                        <th class="col-action"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-break">@noticeItem.FileName</td>
+                                        <td><span class="badge bg-info">HTML</span></td>
+                                        <td>
+                                            @if (noticeItem.Status == "downloaded")
+                                            {
+                                                <span class="badge bg-success">✓ Скачан</span>
+                                                @if (!string.IsNullOrEmpty(noticeItem.ExtractedTextPath))
+                                                {
+                                                    <br /><small class="text-info">📄 Текст извлечён</small>
+                                                }
+                                            }
+                                            else if (noticeItem.Status == "error")
+                                            {
+                                                <span class="badge bg-danger" title="@noticeItem.ErrorMessage">✗ Ошибка</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Ожидание</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (noticeItem.Status == "downloaded")
+                                            {
+                                                <a href="@noticeItem.LocalPath" download class="btn btn-sm btn-outline-secondary">💾</a>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-sm btn-outline-primary"
+                                                        @onclick="() => DownloadNoticeAsync(noticeItem)"
+                                                        disabled="@(isDownloading || noticeItem.Status == "downloading")">
+                                                    📥
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else if (noticeItemState == NoticeItemState.Idle && record != null)
+                    {
+                        <p class="text-muted small mb-0">Нажмите «Загрузить Извещение», чтобы получить печатную форму аукциона с ЕИС.</p>
+                    }
                 </div>
 
                 <!-- 📎 Документация закупки (Этапы 3-5) -->
@@ -383,6 +478,11 @@ else
 }
 
 @code {
+    // 👇 Поля для Извещения (новый функционал)
+    private EisDocumentItem? noticeItem;
+    private NoticeItemState noticeItemState = NoticeItemState.Idle;
+    private string? noticeItemError;
+    private enum NoticeItemState { Idle, Loading, Ready, Error }
     // 👇 Тексты для быстрых промтов (вынесены, чтобы не ломать парсер Razor)
     private const string PromptRequirements = "Выдели ключевые требования к поставщику и условия участия в закупке.";
     private const string PromptDeadlines = "Какие сроки поставки, исполнения контракта и штрафные санкции указаны?";
@@ -455,6 +555,7 @@ else
                 if (MonitorSettings?.AutoLoadDocuments == true)
                 {
                     _ = LoadDocumentListAsync();
+                    _ = LoadNoticeAsync();
                 }
             }
         }
@@ -760,7 +861,87 @@ else
             StateHasChanged();
         }
     }
+    // 👇 Метод загрузки ссылки на Извещение
+    private async Task LoadNoticeAsync()
+    {
+        if (record == null || string.IsNullOrEmpty(record.Link)) return;
 
+        string? regNumber = ExtractRegNumber(record.Link);
+        if (string.IsNullOrEmpty(regNumber))
+        {
+            // 👇 Заменено _logger?.LogDebug на Logger.LogDebug
+            Logger.LogDebug("⚠️ Не удалось извлечь regNumber для автозагрузки Извещения: {Link}", record.Link);
+            return;
+        }
+
+        noticeItemState = NoticeItemState.Loading;
+        noticeItemError = null;
+        StateHasChanged();
+
+        try
+        {
+            noticeItem = await DocumentService.GetNoticePrintFormAsync(record.Link);
+            noticeItemState = noticeItem != null ? NoticeItemState.Ready : NoticeItemState.Idle;
+            if (noticeItem == null)
+            {
+                Logger.LogDebug("ℹ️ Извещение не найдено для regNumber={RegNumber}", regNumber);
+            }
+        }
+        catch (Exception ex)
+        {
+            noticeItemError = ex.Message;
+            noticeItemState = NoticeItemState.Error;
+            Logger.LogWarning(ex, "⚠️ Ошибка автозагрузки Извещения для {Link}", record.Link);
+        }
+        StateHasChanged();
+    }
+
+    // 👇 Метод скачивания Извещения (переиспользует существующий механизм)
+    private async Task DownloadNoticeAsync(EisDocumentItem item)
+    {
+        if (record == null || item == null) return;
+
+        isDownloading = true;
+        StateHasChanged();
+
+        try
+        {
+            string? regNumber = ExtractRegNumber(record.Link);
+            if (string.IsNullOrEmpty(regNumber))
+            {
+                item.Status = "error";
+                item.ErrorMessage = "Не удалось определить номер закупки";
+                isDownloading = false;
+                StateHasChanged();
+                return;
+            }
+
+            // 🔹 Скачиваем как обычный документ (метод уже поддерживает HTML)
+            var results = await DocumentService.DownloadFilesAsync(
+                regNumber,
+                new List<EisDocumentItem> { item },
+                downloadProgress,
+                procurementUrl: record?.Link);
+
+            var updated = results.FirstOrDefault();
+            if (updated != null)
+            {
+                noticeItem!.Status = updated.Status;
+                noticeItem!.LocalPath = updated.LocalPath;
+                noticeItem!.ErrorMessage = updated.ErrorMessage;
+            }
+        }
+        catch (Exception ex)
+        {
+            noticeItem!.Status = "error";
+            noticeItem!.ErrorMessage = $"Ошибка: {ex.Message}";
+        }
+        finally
+        {
+            isDownloading = false;
+            StateHasChanged();
+        }
+    }
     public void Dispose()
     {
         _aiCts?.Cancel();

@@ -26,7 +26,7 @@ namespace QwenWeb.Services.Documents;
 /// Сервис для работы с документами ЕИС (zakupki.gov.ru).
 /// Поддерживает сессию через CookieContainer для обхода защиты 403/капча.
 /// </summary>
-public class EisDocumentService
+public class EisDocumentService : IDisposable
 {
     private readonly ILogger<EisDocumentService> _logger;
     private readonly string _storageRoot;
@@ -43,6 +43,7 @@ public class EisDocumentService
         TimeSpan.FromSeconds(5),
         TimeSpan.FromSeconds(10)
     };
+
     public EisDocumentService(ILogger<EisDocumentService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -76,7 +77,6 @@ public class EisDocumentService
     }
 
     // 🔹 Этап 2.1: Извлечение noticeInfoId или regNumber
-    // 🔹 Этап 2.1: Извлечение noticeInfoId или regNumber (ИСПРАВЛЕНО: LawType из URL)
     public async Task<NoticeInfoResult?> GetNoticeInfoIdAsync(
         string procurementUrl,
         CancellationToken cancellationToken = default)
@@ -101,17 +101,14 @@ public class EisDocumentService
             NoticeInfoResult result = ParseNoticeInfo(html);
 
             // 🔹 ИСПРАВЛЕНИЕ: Если LawType не определён — извлекаем из procurementUrl
-            // 🔹 ИСПРАВЛЕНИЕ: Явное определение LawType для 223-ФЗ и других законов
             if (string.IsNullOrEmpty(result.LawType) && !string.IsNullOrEmpty(procurementUrl))
             {
-                // 1. Пробуем извлечь из самого procurementUrl
                 var lawFromUrl = Regex.Match(procurementUrl, @"/notice/(notice\d{3}|notice44|notice615|zk\d{2}|ea\d{2})/", RegexOptions.IgnoreCase);
                 if (lawFromUrl.Success)
                 {
                     result.LawType = lawFromUrl.Groups[1].Value.ToLowerInvariant();
                     _logger.LogDebug("✅ LawType извлечён из URL: {LawType}", result.LawType);
                 }
-                // 2. Если не получилось — ищем в контексте страницы (рядом с ссылкой)
                 else if (!string.IsNullOrEmpty(result.DocumentsPageUrl))
                 {
                     int linkIndex = html.IndexOf(result.DocumentsPageUrl, StringComparison.OrdinalIgnoreCase);
@@ -119,7 +116,6 @@ public class EisDocumentService
                     {
                         int contextStart = Math.Max(0, linkIndex - 800);
                         string context = html.Substring(contextStart, Math.Min(800, html.Length - contextStart));
-                        // Ищем явные маркеры 223-ФЗ, 44-ФЗ, 615-ПП
                         var lawMatch = Regex.Match(context,
                             @"(?:закон|фз|пп)\s*[:\s\-]*\s*(223|44|615)|notice(223|44|615)|law\s*:\s*(223|44|615)",
                             RegexOptions.IgnoreCase);
@@ -154,37 +150,119 @@ public class EisDocumentService
         }
     }
 
+    // 🔹 Этап 1.1: Получение ссылки на печатную форму Извещения (для аукциона)
+    // Формат ЕИС: /epz/order/notice/printForm/view.html?regNumber={REG}
+    public async Task<EisDocumentItem?> GetNoticePrintFormAsync(
+        string procurementUrl,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("🔍 Поиск ссылки на Извещение для URL={Url}", procurementUrl);
+
+        try
+        {
+            string? regNumber = ExtractRegNumberFromUrl(procurementUrl);
+
+            if (!string.IsNullOrEmpty(regNumber))
+            {
+                string printFormUrl = $"{EisBaseUrl}/epz/order/notice/printForm/view.html?regNumber={regNumber}";
+
+                using var request = new HttpRequestMessage(HttpMethod.Head, printFormUrl);
+                request.Headers.Referrer = new Uri(procurementUrl);
+
+                using var response = await _httpClient.SendAsync(request, cancellationToken);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var noticeItem = new EisDocumentItem
+                    {
+                        FileName = $"Извещение_аукциона_{regNumber}.html",
+                        FileId = $"NOTICE_{regNumber}",
+                        MimeType = "text/html",
+                        DownloadUrl = printFormUrl,
+                        Status = "pending",
+                        IsArchive = false,
+                    };
+
+                    _logger.LogInformation("✅ Найдена ссылка на Извещение: {Url}", printFormUrl);
+                    return noticeItem;
+                }
+                else
+                {
+                    _logger.LogWarning("⚠️ Извещение недоступно (статус {StatusCode}) для regNumber={RegNumber}",
+                        response.StatusCode, regNumber);
+                }
+            }
+
+            // 3. Фоллбэк: парсим ссылку из HTML страницы закупки
+            return await ParseNoticePrintFormFromHtmlAsync(procurementUrl, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "💥 Ошибка при поиске Извещения для URL={Url}", procurementUrl);
+            return null;
+        }
+    }
+
+    // 🔹 Вспомогательный метод: извлечение regNumber из URL закупки
+    private static string? ExtractRegNumberFromUrl(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return null;
+        var match = Regex.Match(url, @"[?&]regNumber=([0-9A-Za-z\-_]+)", RegexOptions.IgnoreCase);
+        return match.Success ? match.Groups[1].Value.Trim() : null;
+    }
+
+    // 🔹 Фоллбэк-парсинг: ищем ссылку на printForm/view.html в HTML страницы
+    private async Task<EisDocumentItem?> ParseNoticePrintFormFromHtmlAsync(
+        string procurementUrl,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, procurementUrl);
+        request.Headers.Referrer = new Uri(EisBaseUrl);
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode) return null;
+
+        string html = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        var regex = new Regex(
+            @"/epz/order/notice/printForm/view\.html\?[^""'\s>]*regNumber\s*=\s*([0-9A-Za-z\-_]+)[^""'\s>]*",
+            RegexOptions.IgnoreCase);
+
+        var match = regex.Match(html);
+        if (match.Success && match.Groups.Count >= 2)
+        {
+            string regNumber = match.Groups[1].Value.Trim();
+            string printFormUrl = $"{EisBaseUrl}/epz/order/notice/printForm/view.html?regNumber={regNumber}";
+
+            return new EisDocumentItem
+            {
+                FileName = $"Извещение_аукциона_{regNumber}.html",
+                FileId = $"NOTICE_{regNumber}",
+                MimeType = "text/html",
+                DownloadUrl = printFormUrl,
+                Status = "pending",
+                IsArchive = false
+            };
+        }
+
+        _logger.LogDebug("❌ Ссылка на Извещение не найдена в HTML для URL={Url}", procurementUrl);
+        return null;
+    }
+
     // 🔹 Парсинг noticeInfoId или regNumber из HTML
-    // 🔹 Парсинг noticeInfoId или regNumber из HTML (ОТЛАДОЧНАЯ ВЕРСИЯ)
-    // 🔹 Парсинг noticeInfoId или regNumber из HTML (ОБНОВЛЕНО под новую структуру ЕИС с /view/)
-    // 🔹 Парсинг noticeInfoId или regNumber из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615)
-    // 🔹 Парсинг noticeInfoId или regNumber из HTML (УНИВЕРСАЛЬНЫЙ: не зависит от текста внутри <a>)
-    // 🔹 Парсинг noticeInfoId или regNumber из HTML (УНИВЕРСАЛЬНЫЙ: не зависит от текста внутри <a>)
     private NoticeInfoResult ParseNoticeInfo(string html)
     {
         var result = new NoticeInfoResult();
         if (string.IsNullOrWhiteSpace(html) || html.Length < 1000) return result;
 
-        // 🔍 ОТЛАДКА: логируем ВСЕ ссылки, содержащие documents.html
         if (_logger.IsEnabled(LogLevel.Debug))
         {
             var allDocLinks = Regex.Matches(html,
                 @"<a[^>]*href\s*=\s*[""']?([^""'\s>]*documents\.html[^""'\s>]*)[^>]*>",
                 RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
             _logger.LogDebug("🔎 Найдено ссылок на documents.html: {Count}", allDocLinks.Count);
-            foreach (Match link in allDocLinks)
-            {
-                if (link.Groups.Count >= 2)
-                {
-                    string href = link.Groups[1].Value.Trim();
-                    _logger.LogDebug("🔗 Ссылка: {Href}", href);
-                }
-            }
         }
 
-        // ✅ РЕГУЛЯРКА #1: Универсальная — ищем href с documents.html + regNumber или noticeInfoId
-        // Не зависит от текста внутри <a>, поддерживает /view/ и без него
         var regexUniversal = new Regex(
             @"<a\s+[^>]*?href\s*=\s*[""']?((?:https?://[^""'\s>]+|/[^""'\s>]*)documents\.html\?[^""'\s>]*(?:regNumber|noticeInfoId)\s*=\s*([0-9a-zA-Z\-]+)[^""'\s>]*)[""']?[^>]*?>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -195,7 +273,6 @@ public class EisDocumentService
             string fullUrl = match.Groups[1].Value.Trim();
             string identifier = match.Groups[2].Value.Trim();
 
-            // Определяем тип идентификатора
             if (identifier.All(char.IsDigit))
             {
                 result.NoticeInfoId = identifier;
@@ -207,14 +284,11 @@ public class EisDocumentService
                 _logger.LogDebug("✅ Найдена ссылка с regNumber={RegNumber}", identifier);
             }
 
-            // Извлекаем lawType из контекста (рядом с ссылкой)
             int linkIndex = html.IndexOf(fullUrl, StringComparison.OrdinalIgnoreCase);
             if (linkIndex > 0)
             {
                 int contextStart = Math.Max(0, linkIndex - 500);
                 string context = html.Substring(contextStart, Math.Min(500, html.Length - contextStart));
-
-                // Ищем lawType в контексте: 44, 223, 615, notice44, notice223, notice615, zk20, ea20
                 var lawMatch = Regex.Match(context, @"(?:notice|law)?(44|223|615|zk|ea|z[0-9]+|e[0-9]+)(?:-фз|-пп|[^а-яё\-])?", RegexOptions.IgnoreCase);
                 if (lawMatch.Success)
                 {
@@ -223,7 +297,6 @@ public class EisDocumentService
                 }
             }
 
-            // Нормализация URL: если относительный → добавляем базовый домен
             result.DocumentsPageUrl = fullUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                 ? fullUrl
                 : EisBaseUrl + (fullUrl.StartsWith("/") ? fullUrl : "/" + fullUrl);
@@ -232,7 +305,6 @@ public class EisDocumentService
             return result;
         }
 
-        // Проверка на капчу
         if (html.Contains("captcha", StringComparison.OrdinalIgnoreCase) ||
             html.Contains("access denied", StringComparison.OrdinalIgnoreCase))
         {
@@ -260,7 +332,6 @@ public class EisDocumentService
             }
 
             using var request = new HttpRequestMessage(HttpMethod.Get, noticeInfo.DocumentsPageUrl);
-            // 🔹 Referer должен указывать на исходную страницу тендера
             request.Headers.Referrer = new Uri(procurementUrl);
 
             using var response = await _httpClient.SendAsync(request, cancellationToken);
@@ -282,20 +353,10 @@ public class EisDocumentService
     }
 
     // 🔹 Парсинг ссылок на документы из HTML
-    // 🔹 Парсинг ссылок на документы из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615)
-    // 🔹 Парсинг ссылок на документы из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615 + прокси Tenderplan)
-    // 🔹 Парсинг ссылок на документы из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615 + все форматы)
-    // 🔹 Парсинг ссылок на документы из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615)
-    // 🔹 Парсинг ссылок на документы из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615)
-    // 🔹 Парсинг ссылок на документы из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615 + расширенный поиск)
-    // 🔹 Парсинг ссылок на документы из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615)
-    // 🔹 Парсинг ссылок на документы из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615)
-    // 🔹 Парсинг ссылок на документы из HTML (УНИВЕРСАЛЬНЫЙ: 44/223/615)
     private List<EisDocumentItem> ParseDocumentLinks(string html)
     {
         var result = new List<EisDocumentItem>();
 
-        // 🔍 ОТЛАДКА: логируем потенциальные ссылки на файлы
         if (_logger.IsEnabled(LogLevel.Debug))
         {
             var allFileLinks = Regex.Matches(html,
@@ -304,7 +365,7 @@ public class EisDocumentService
             _logger.LogDebug("🔎 Найдено потенциальных ссылок на файлы: {Count}", allFileLinks.Count);
         }
 
-        // ✅ ВАРИАНТ 1: Стандартный паттерн ЕИС (44-ФЗ/615-ПП) — file.html?uid=HEX + title="filename"
+        // ✅ ВАРИАНТ 1: Стандартный паттерн ЕИС (44-ФЗ/615-ПП)
         var regexStandard = new Regex(
             @"<a\s+[^>]*?href\s*=\s*[""']?((?:https?://)?zakupki\.gov\.ru/[^""'\s>]*/file\.html\?[^""'\s>]*uid\s*=\s*([0-9A-Fa-f\-]+)[^""'\s>]*)[""']?[^>]*?(?:title|data-filename|data-name)\s*=\s*[""']?([^""'>]+\.(?:pdf|docx?|xlsx?|zip|rar|7z|txt|rtf|odt))[""']?[^>]*?>",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -324,7 +385,7 @@ public class EisDocumentService
             }
         }
 
-        // ✅ ВАРИАНТ 2: Паттерн для 223-ФЗ — download.html?id=NUM + data-tooltip с именем файла
+        // ✅ ВАРИАНТ 2: Паттерн для 223-ФЗ
         var regex223Tooltip = new Regex(
             @"<a\s+[^>]*?href\s*=\s*[""']?(/223/purchase/public/download/download\.html\?id\s*=\s*([0-9]+)[^""'\s>]*)[""']?[^>]*?data-tooltip\s*=\s*['""]<span\s+class\s*=\s*['""]custom-tooltiptext['""]>([^<>\r\n]+\.(?:pdf|docx?|xlsx?|zip|rar|7z|txt|rtf|odt))",
             RegexOptions.IgnoreCase | RegexOptions.Singleline);
@@ -357,7 +418,6 @@ public class EisDocumentService
                 string fileId = match.Groups[2].Value.Trim();
                 string fileName = match.Groups[3].Value.Trim();
 
-                // Очищаем имя от дублирования расширений
                 if (fileName.Contains(".pdf", StringComparison.OrdinalIgnoreCase) && !fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
                 {
                     int pdfIndex = fileName.IndexOf(".pdf", StringComparison.OrdinalIgnoreCase);
@@ -375,7 +435,7 @@ public class EisDocumentService
         return result;
     }
 
-    // 🔹 ЕДИНЫЙ хелпер для создания EisDocumentItem (должен быть ТОЛЬКО ОДИН в файле!)
+    // 🔹 ЕДИНЫЙ хелпер для создания EisDocumentItem
     private EisDocumentItem CreateDocumentItem(string downloadPath, string fileId, string fileName)
     {
         string downloadUrl = downloadPath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
@@ -395,99 +455,6 @@ public class EisDocumentService
         };
     }
 
-    // 🔹 ЕДИНЫЙ хелпер для создания EisDocumentItem (убедись, что он только один в файле!)
-
-
-    // 🔹 Вспомогательный метод: обработка прямой ссылки
-    private void ProcessDirectLink(Match match, List<EisDocumentItem> result)
-    {
-        string rawUrl = match.Groups[1].Value.Trim();
-        string fileId = match.Groups[2].Value.Trim();
-        string fileName = match.Groups[3].Value.Trim();
-        string description = match.Groups[4].Value.Trim();
-
-        if (string.IsNullOrEmpty(fileName) || fileName.Contains("ЭЦП", StringComparison.OrdinalIgnoreCase)) return;
-
-        // Нормализация URL: если относительный → добавляем базовый домен
-        string downloadUrl = rawUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase)
-            ? rawUrl
-            : EisBaseUrl + (rawUrl.StartsWith("/") ? rawUrl : "/" + rawUrl);
-
-        result.Add(new EisDocumentItem
-        {
-            FileName = fileName,
-            FileId = fileId,
-            MimeType = GetMimeType(fileName),
-            DownloadUrl = downloadUrl,
-            IsArchive = fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
-                        fileName.EndsWith(".rar", StringComparison.OrdinalIgnoreCase) ||
-                        fileName.EndsWith(".7z", StringComparison.OrdinalIgnoreCase),
-            Status = "pending"
-        });
-    }
-
-    // 🔹 Вспомогательный метод: обработка прокси-ссылки Tenderplan
-    private void ProcessProxyLink(Match match, List<EisDocumentItem> result)
-    {
-        string proxyPath = match.Groups[1].Value.Trim();  // /fileviewer?link=...
-        string encodedLink = match.Groups[2].Value.Trim(); // URL-encoded реальная ссылка
-        string fileName = match.Groups[3].Value.Trim();
-        string description = match.Groups[4].Value.Trim();
-
-        if (string.IsNullOrEmpty(fileName) || fileName.Contains("ЭЦП", StringComparison.OrdinalIgnoreCase)) return;
-
-        try
-        {
-            // 🔹 ДЕКОДИРУЕМ ссылку из параметра link
-            string decodedLink = System.Web.HttpUtility.UrlDecode(encodedLink);
-
-            // Если декодированная ссылка — на zakupki.gov.ru, используем её напрямую
-            // (наш HttpClient с куками справится с прямым запросом к ЕИС)
-            if (decodedLink.StartsWith("https://zakupki.gov.ru", StringComparison.OrdinalIgnoreCase))
-            {
-                result.Add(new EisDocumentItem
-                {
-                    FileName = fileName,
-                    FileId = Guid.NewGuid().ToString("N"), // Для прокси-ссылок генерируем временный ID
-                    MimeType = GetMimeType(fileName),
-                    DownloadUrl = decodedLink, // Используем прямую ссылку на ЕИС
-                    IsArchive = fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
-                                fileName.EndsWith(".rar", StringComparison.OrdinalIgnoreCase),
-                    Status = "pending"
-                });
-                _logger.LogDebug("Прокси-ссылка декодирована: {Proxy} → {Direct}", proxyPath, decodedLink);
-            }
-            else
-            {
-                // Если ссылка осталась прокси-формата — оставляем как есть (фоллбэк)
-                result.Add(new EisDocumentItem
-                {
-                    FileName = fileName,
-                    FileId = Guid.NewGuid().ToString("N"),
-                    MimeType = GetMimeType(fileName),
-                    DownloadUrl = EisBaseUrl + (proxyPath.StartsWith("/") ? proxyPath : "/" + proxyPath),
-                    IsArchive = fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase),
-                    Status = "pending"
-                });
-                _logger.LogDebug("Прокси-ссылка оставлена без изменений: {Proxy}", proxyPath);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Не удалось декодировать прокси-ссылку: {Encoded}", encodedLink);
-            // Фоллбэк: добавляем как есть
-            result.Add(new EisDocumentItem
-            {
-                FileName = fileName,
-                FileId = Guid.NewGuid().ToString("N"),
-                MimeType = GetMimeType(fileName),
-                DownloadUrl = EisBaseUrl + (proxyPath.StartsWith("/") ? proxyPath : "/" + proxyPath),
-                IsArchive = fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase),
-                Status = "pending"
-            });
-        }
-    }
-
     private static string? GetMimeType(string fileName)
     {
         if (string.IsNullOrEmpty(fileName)) return null;
@@ -501,18 +468,20 @@ public class EisDocumentService
             ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             ".zip" or ".rar" or ".7z" => "application/zip",
             ".txt" => "text/plain",
+            ".html" or ".htm" => "text/html",
             ".rtf" => "application/rtf",
             ".odt" => "application/vnd.oasis.opendocument.text",
             _ => "application/octet-stream"
         };
     }
 
-    // 🔹 Этап 4: Скачивание файлов (ИСПРАВЛЕНО: с сессией и заголовками)
+    // 🔹 Этап 4: Скачивание файлов
     public async Task<List<EisDocumentItem>> DownloadFilesAsync(
         string regNumber,
         List<EisDocumentItem> documents,
         IProgress<EisDocumentItem>? progress = null,
-        CancellationToken cancellationToken = default,string? procurementUrl = null)
+        CancellationToken cancellationToken = default,
+        string? procurementUrl = null)
     {
         _logger.LogInformation("Начало скачивания {Count} документов для regNumber={RegNumber}", documents.Count, regNumber);
         string tenderFolder = Path.Combine(_storageRoot, regNumber);
@@ -559,7 +528,6 @@ public class EisDocumentService
                     continue;
                 }
 
-                // 🔹 КЛЮЧЕВОЕ: используем _httpClient (с куки) и добавляем Referer
                 await DownloadFileWithProgressAsync(doc.DownloadUrl, localPath, doc, procurementUrl, progress, cancellationToken);
 
                 doc.LocalPath = localPath;
@@ -585,7 +553,6 @@ public class EisDocumentService
         return results;
     }
 
-    // 🔹 Скачивание файла с прогрессом (ИСПРАВЛЕНО: с сессией и заголовками)
     // 🔹 Скачивание файла с прогрессом и повторами при ошибках
     private async Task DownloadFileWithProgressAsync(
         string url,
@@ -602,15 +569,7 @@ public class EisDocumentService
             try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Get, url);
-
-                if (!string.IsNullOrEmpty(procurementUrl))
-                {
-                    request.Headers.Referrer = new Uri(procurementUrl);
-                }
-                else
-                {
-                    request.Headers.Referrer = new Uri(EisBaseUrl);
-                }
+                request.Headers.Referrer = !string.IsNullOrEmpty(procurementUrl) ? new Uri(procurementUrl) : new Uri(EisBaseUrl);
 
                 using var response = await _httpClient.SendAsync(
                     request,
@@ -644,31 +603,25 @@ public class EisDocumentService
                     }
                 }
                 await fileStream.FlushAsync(cancellationToken);
-
-                // ✅ Успех — выходим из цикла повторов
                 return;
             }
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
             {
-                // 403 — часто временная блокировка, пробуем снова
                 lastException = ex;
                 _logger.LogDebug("Попытка {Attempt}/{Max} не удалась (403): {Url}",
                     attempt + 1, MaxRetryCount + 1, url);
             }
             catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // Пользователь отменил — не повторяем
                 throw;
             }
             catch (Exception ex)
             {
-                // Другие ошибки сети — пробуем снова
                 lastException = ex;
                 _logger.LogDebug("Попытка {Attempt}/{Max} не удалась ({Type}): {Url}",
                     attempt + 1, MaxRetryCount + 1, ex.GetType().Name, url);
             }
 
-            // ⏱ Ждём перед следующей попыткой (экспоненциальная задержка)
             if (attempt < MaxRetryCount && !cancellationToken.IsCancellationRequested)
             {
                 var delay = RetryDelays[Math.Min(attempt, RetryDelays.Length - 1)];
@@ -677,7 +630,6 @@ public class EisDocumentService
             }
         }
 
-        // ❌ Все попытки исчерпаны — пробрасываем последнюю ошибку
         if (lastException != null)
         {
             throw lastException;
@@ -693,7 +645,7 @@ public class EisDocumentService
         return fileName;
     }
 
-    // 🔹 Этап 5: Извлечение текста (без изменений, работает корректно)
+    // 🔹 Этап 5: Извлечение текста
     public async Task<List<EisDocumentItem>> ExtractTextFromDocumentsAsync(
         string regNumber,
         List<EisDocumentItem> documents,
@@ -782,6 +734,7 @@ public class EisDocumentService
         return extension switch
         {
             ".txt" => await Task.FromResult(File.ReadAllText(filePath, Encoding.UTF8)),
+            ".html" or ".htm" => await ExtractTextFromHtmlAsync(filePath, cancellationToken),
             ".docx" => await ExtractTextFromDocxAsync(filePath, doc, progress, cancellationToken),
             ".odt" => await ExtractTextFromOdtAsync(filePath, doc, progress, cancellationToken),
             ".pdf" => await ExtractTextFromPdfAsync(filePath, doc, progress, cancellationToken),
@@ -791,7 +744,29 @@ public class EisDocumentService
         };
     }
 
-    // 🔹 Вспомогательные методы извлечения текста (без изменений)
+    // 🔹 Новый метод: извлечение текста из HTML (Извещение)
+    private static Task<string?> ExtractTextFromHtmlAsync(string filePath, CancellationToken cancellationToken) =>
+        Task.Run(() =>
+        {
+            try
+            {
+                var html = File.ReadAllText(filePath, Encoding.UTF8);
+                // Удаляем скрипты и стили
+                var text = Regex.Replace(html, @"<script[^>]*>[\s\S]*?</script>", "", RegexOptions.IgnoreCase);
+                text = Regex.Replace(text, @"<style[^>]*>[\s\S]*?</style>", "", RegexOptions.IgnoreCase);
+                // Удаляем HTML-теги
+                text = Regex.Replace(text, @"<[^>]+>", " ");
+                // Нормализуем пробелы
+                text = Regex.Replace(text, @"\s+", " ").Trim();
+                return CleanExtractedText(text);
+            }
+            catch
+            {
+                return null;
+            }
+        }, cancellationToken);
+
+    // 🔹 Вспомогательные методы извлечения текста
     private async Task<string?> ExtractTextFromDocxAsync(string filePath, EisDocumentItem doc, IProgress<EisDocumentItem>? progress, CancellationToken cancellationToken) =>
         await Task.Run(() => { try { using var wordDoc = WordprocessingDocument.Open(filePath, false); var text = wordDoc.MainDocumentPart?.Document?.Body?.InnerText ?? string.Empty; doc.TextExtractionProgress = 1.0; return CleanExtractedText(text); } catch { return null; } }, cancellationToken);
 
@@ -836,13 +811,12 @@ public class EisDocumentService
     }
 
     // 🔹 Повторная загрузка только файлов со статусом "error"
-    // 🔹 Повторная загрузка только файлов со статусом "error"
     public async Task<List<EisDocumentItem>> RetryFailedDownloadsAsync(
         string regNumber,
         List<EisDocumentItem> documents,
         IProgress<EisDocumentItem>? progress = null,
         CancellationToken cancellationToken = default,
-        string? procurementUrl = null)  // ← НОВЫЙ параметр
+        string? procurementUrl = null)
     {
         var failedDocs = documents
             .Where(d => d.Status == "error" && d.CanRetry)
@@ -857,7 +831,6 @@ public class EisDocumentService
         _logger.LogInformation("Повторная загрузка {Count} файлов для regNumber={RegNumber}",
             failedDocs.Count, regNumber);
 
-        // Обновляем метаданные перед повтором
         foreach (var doc in failedDocs)
         {
             doc.RetryCount++;
@@ -867,11 +840,8 @@ public class EisDocumentService
             doc.DownloadProgress = 0.0;
         }
 
-        // Вызываем основной метод загрузки только для неудачных файлов
-        // 🔹 КЛЮЧЕВОЕ: передаём procurementUrl
         var results = await DownloadFilesAsync(regNumber, failedDocs, progress, cancellationToken, procurementUrl);
 
-        // Обновляем исходный список результатами
         foreach (var result in results)
         {
             var original = documents.FirstOrDefault(d => d.FileId == result.FileId);
