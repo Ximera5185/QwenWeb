@@ -1,55 +1,78 @@
 ﻿@using QwenWeb.Models
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
 
-<div class="card mb-3 shadow-sm tender-card" @onclick="OpenDetails">
+@code {
+    [Parameter] public TenderDisplayItem Item { get; set; } = default!;
+}
+
+<div class="card mb-3 shadow-sm tender-card" @onclick="OpenDetails" style="cursor: pointer;">
     <div class="card-body p-3">
         <div class="d-flex justify-content-between align-items-start mb-2">
-            <h6 class="card-title mb-0 fw-bold text-truncate tender-card-title">
-                @Item.ParsedInfo.ObjectName
+            <h6 class="card-title mb-0 fw-bold text-truncate tender-card-title" style="max-width: 70%;">
+                @* 🔹 безопасное получение названия *@
+                @(Item?.ParsedInfo?.ObjectName ?? Item?.Record?.Title ?? "Без названия")
             </h6>
             <div class="d-flex gap-2 flex-shrink-0">
-                @if (!string.IsNullOrEmpty(Item.ParsedInfo.LawType))
+                @* 🔹 закон (если есть) *@
+                @if (!string.IsNullOrEmpty(Item?.ParsedInfo?.LawType))
                 {
                     <span class="badge bg-primary">@Item.ParsedInfo.LawType</span>
                 }
-                @if (!string.IsNullOrEmpty(Item.ParsedInfo.Stage))
+                @* 🔹 цена из записи (не из ParsedInfo) *@
+                @if (Item?.Record?.InitialPrice.HasValue == true)
                 {
-                    <span class="badge @(GetStageBadgeClass(Item.ParsedInfo.Stage))">@Item.ParsedInfo.Stage</span>
+                    <span class="badge bg-success">@(((decimal)Item.Record.InitialPrice).ToString("N0")) ₽</span>
                 }
             </div>
         </div>
-        <div class="row text-muted small mb-2">
-            <div class="col-12 col-md-8 mb-1">
-                🏢 <span class="text-dark">@Item.ParsedInfo.Customer</span>
-            </div>
-            @if (Item.ParsedInfo.InitialPrice.HasValue)
+
+        <div class="text-muted small mb-2">
+            @* 🔹 только безопасные поля из Record *@
+            @if (!string.IsNullOrEmpty(Item?.Record?.RegionCode))
             {
-                <div class="col-12 col-md-4 text-md-end fw-bold text-success">
-                    💰 @Item.ParsedInfo.InitialPrice.Value.ToString("N2", System.Globalization.CultureInfo.CurrentCulture) @Item.ParsedInfo.Currency
-                </div>
+                <span>📍 @Item.Record.RegionCode</span>
+                <span class="mx-1">•</span>
             }
+            @* заказчик пока не отображаем, пока не знаем точные свойства в ParsedInfo *@
         </div>
-        <div class="text-muted small border-top pt-2 mt-2">
-            📅 @(Item.Record.PubDate?.ToString("dd.MM.yyyy HH:mm") ?? "Дата не указана")
+
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                @* 🔹 дата публикации *@
+                @if (Item?.Record?.PubDate.HasValue == true)
+                {
+                    <span>📅 @Item.Record.PubDate?.ToString("dd.MM.yyyy")</span>
+                }
+                @* 🔹 номер закупки *@
+                @if (!string.IsNullOrEmpty(Item?.Record?.RegNumber))
+                {
+                    <span class="mx-2">•</span>
+                    <code>@Item.Record.RegNumber</code>
+                }
+            </small>
+            @* 🔹 статус обработки *@
+            @if (Item?.Record?.Status == "raw")
+            {
+                <span class="badge bg-warning text-dark">⏳ обработка</span>
+            }
+            else if (Item?.Record?.Status == "processed")
+            {
+                <span class="badge bg-success">✓ готово</span>
+            }
+            else if (Item?.Record?.Status == "error")
+            {
+                <span class="badge bg-danger">⚠ ошибка</span>
+            }
         </div>
     </div>
 </div>
 
 @code {
-    [Parameter] public required QwenWeb.Models.TenderDisplayItem Item { get; set; } = null!;
-
-    private string GetStageBadgeClass(string stage)
-    {
-        if (string.IsNullOrEmpty(stage)) return "bg-secondary";
-
-        return stage.Contains("Подача", System.StringComparison.OrdinalIgnoreCase) ? "bg-success" :
-                       stage.Contains("Завершена", System.StringComparison.OrdinalIgnoreCase) ? "bg-secondary" :
-                       stage.Contains("Отменена", System.StringComparison.OrdinalIgnoreCase) ? "bg-danger" : "bg-info";
-    }
-
     private void OpenDetails()
     {
-        string encodedLink = System.Uri.EscapeDataString(Item.Record.Link);
-        NavigationManager.NavigateTo($"/tender?link={encodedLink}");
+        if (Item?.Record?.Id > 0)
+        {
+            NavigationManager.NavigateTo($"/monitor/tenders/{Item.Record.Id}");
+        }
     }
 }

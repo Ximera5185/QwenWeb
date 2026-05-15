@@ -1,0 +1,147 @@
+﻿@page "/monitor/dashboard"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using QwenWeb.Data
+@using QwenWeb.Models
+@using QwenWeb.Services.Monitoring
+
+@inject MonitorProfileManager ProfileManager
+@inject TenderMonitorDbContext Db
+@inject Microsoft.JSInterop.IJSRuntime JsRuntime
+
+<h3>📊 Мониторинг закупок — профили</h3>
+
+<div class="alert alert-info d-flex justify-content-between align-items-center">
+    <div>
+        <strong>Всего закупок в базе:</strong> @totalTendersCount.ToString("N0")
+    </div>
+    <a href="/monitor/profiles/create" class="btn btn-sm btn-primary">
+        ➕ Добавить профиль
+    </a>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Загрузка профилей...</p>
+    </div>
+}
+else if (profiles.Count == 0)
+{
+    <div class="alert alert-warning">
+        Нет активных профилей мониторинга.
+        <a href="/monitor/profiles/create" class="alert-link">Создать первый профиль</a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var profile in profiles)
+        {
+            <div class="col-md-6 col-lg-4" @key="profile.Id">
+                <ProfileCard Profile="profile"
+                             Stats="stats"
+                             OnStart="(id) => ToggleProfileAsync(id, true)"
+                             OnStop="(id) => ToggleProfileAsync(id, false)"
+                             OnDelete="DeleteProfileAsync" />
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<MonitorProfile> profiles = new();
+    private IReadOnlyDictionary<int, MonitorProfileManager.ProfileStats>? stats;
+    private bool isLoading = true;
+    private int totalTendersCount = 0;
+    private PeriodicTimer? refreshTimer;
+    private CancellationTokenSource? refreshCts;
+
+    protected override void OnInitialized()
+    {
+        refreshCts = new CancellationTokenSource();
+        refreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+        _ = RefreshLoopAsync(refreshCts.Token);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            profiles = await Db.MonitorProfiles
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+
+            totalTendersCount = await Db.Tenders.CountAsync();
+            stats = ProfileManager.GetStats();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] LoadDataAsync: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshLoopAsync(CancellationToken token)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested && await refreshTimer!.WaitForNextTickAsync(token))
+            {
+                stats = ProfileManager.GetStats();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task ToggleProfileAsync(int profileId, bool activate)
+    {
+        try
+        {
+            await ProfileManager.ToggleProfileAsync(profileId, activate);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] ToggleProfileAsync: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteProfileAsync(int profileId)
+    {
+        try
+        {
+            // Простое подтверждение через JS
+            var confirm = await JsRuntime.InvokeAsync<bool>("confirm", "Удалить этот профиль мониторинга? Найденные закупки останутся в базе.");
+            if (!confirm) return;
+
+            await ProfileManager.DeleteProfileAsync(profileId);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] DeleteProfileAsync: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        refreshCts?.Cancel();
+        refreshTimer?.Dispose();
+        refreshCts?.Dispose();
+    }
+}

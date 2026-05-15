@@ -44,6 +44,9 @@ public class EisDocumentService : IDisposable
         TimeSpan.FromSeconds(10)
     };
 
+    // 🔹 Публичный доступ к HttpClient для переиспользования сессии
+    public HttpClient HttpClient => _httpClient;
+
     public EisDocumentService(ILogger<EisDocumentService> logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -635,6 +638,7 @@ public class EisDocumentService : IDisposable
             throw lastException;
         }
     }
+
 
     private static string GetSafeFileName(string fileName)
     {

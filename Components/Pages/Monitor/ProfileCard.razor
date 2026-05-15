@@ -1,0 +1,96 @@
+﻿@using QwenWeb.Models
+@using QwenWeb.Services.Monitoring
+
+<div class="card h-100">
+    <div class="card-body">
+        <h6 class="card-title">@Profile.Name</h6>
+        <p class="card-text small text-muted mb-1">
+            🌍 @GetRegionName(Profile.RegionCode) | ⚖️ @Profile.LawType-ФЗ
+        </p>
+        <p class="card-text small mb-2">
+            ⏱ Интервал: @Profile.PollIntervalMinutes мин
+        </p>
+
+        @if (Stats?.TryGetValue(Profile.Id, out var stat) == true)
+        {
+            <p class="card-text small mb-1">
+                📥 Найдено: <strong>@stat.LastFoundCount</strong>
+            </p>
+            <p class="card-text small text-muted">
+                🕐 Последнее: @(stat.LastRunAt?.ToString("HH:mm") ?? "—")
+            </p>
+            @if (!string.IsNullOrWhiteSpace(stat.LastError))
+            {
+                <p class="card-text small text-danger">⚠️ @stat.LastError</p>
+            }
+        }
+        else
+        {
+            <p class="card-text small text-muted">🕐 Ожидание первого запуска...</p>
+        }
+    </div>
+
+    <div class="card-footer bg-transparent border-top-0 d-flex gap-2 flex-wrap">
+        <a href="/monitor/profiles/@Profile.Id/tenders" class="btn btn-sm btn-outline-primary">🔍 Закупки</a>
+        <a href="/monitor/profiles/edit/@Profile.Id" class="btn btn-sm btn-outline-secondary">✏️</a>
+
+        @if (Profile.IsActive)
+        {
+            <button class="btn btn-sm btn-outline-warning" @onclick="HandleStopAsync" disabled="@isProcessing">⏹ Стоп</button>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-outline-success" @onclick="HandleStartAsync" disabled="@isProcessing">▶ Старт</button>
+        }
+
+        <button class="btn btn-sm btn-outline-danger" @onclick="HandleDeleteAsync" disabled="@isProcessing">🗑</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public required MonitorProfile Profile { get; set; } = null!;
+    [Parameter] public IReadOnlyDictionary<int, MonitorProfileManager.ProfileStats>? Stats { get; set; }
+
+    [Parameter] public EventCallback<int> OnStart { get; set; }
+    [Parameter] public EventCallback<int> OnStop { get; set; }
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
+
+    private bool isProcessing;
+
+    private async Task HandleStartAsync()
+    {
+        if (isProcessing) return;
+        isProcessing = true;
+        try { await OnStart.InvokeAsync(Profile.Id); }
+        finally { isProcessing = false; }
+    }
+
+    private async Task HandleStopAsync()
+    {
+        if (isProcessing) return;
+        isProcessing = true;
+        try { await OnStop.InvokeAsync(Profile.Id); }
+        finally { isProcessing = false; }
+    }
+
+    private async Task HandleDeleteAsync()
+    {
+        if (isProcessing) return;
+        isProcessing = true;
+        try { await OnDelete.InvokeAsync(Profile.Id); }
+        finally { isProcessing = false; }
+    }
+
+    private static string GetRegionName(string code) => code switch
+    {
+        "38000000000" => "Иркутская обл.",
+        "24000000000" => "Красноярский край",
+        "54000000000" => "Новосибирская обл.",
+        "75000000000" => "Забайкальский край",
+        "27000000000" => "Хабаровский край",
+        "28000000000" => "Амурская обл.",
+        "79000000000" => "ЕАО",
+        "87000000000" => "Чукотка",
+        _ => $"Код: {code}"
+    };
+}

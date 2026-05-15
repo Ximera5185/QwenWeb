@@ -159,6 +159,250 @@ git diff                                           # Показать измен
 git diff --staged                                  # Показать изменения, которые уже в индексе
 
 
+### File: irkutsk_44fz_2026-05-13_regnumbers.txt ###
+
+0101600002826000097
+0108500000426002866
+0109200002726000008
+0111300063226000167
+0111300063226000168
+0115100002826000027
+0116300000126000579
+0118100008226000022
+0119200000126008765
+0121400000226000016
+0123200000326000847
+0124200000626003270
+0124200000626003271
+0124200000626003272
+0127200000226002981
+0128200000126002844
+0128200000126002859
+0130600041626000029
+0131200001026002765
+0131300000626000649
+0131300045226000143
+0132300001726000282
+0132300026726000016
+0133200001726001418
+0134300097526000302
+0135300006426000071
+0136600002626000079
+0137600009126000065
+0141100000526000052
+0142200001326010890
+0142200001326010904
+0142200001326010913
+0142200001326010914
+0142200001326010915
+0142200001326010916
+0142200001326010917
+0142200001326010918
+0142200001326010919
+0143100005826000014
+0148300000626000620
+0148300000626000621
+0148300000626000622
+0149200002326002528
+0150100005226000043
+0157200000326000534
+0157600002026000041
+0158200001326000734
+0160400000326000028
+0162300005326000926
+0162300005326000933
+0163200000326002634
+0163300000326000042
+0163600005526000188
+0165300003126000071
+0167200003426004117
+0167200003426004118
+0169300000326001136
+0171200001926001940
+0172300006826000021
+0173100017626000013
+0174500001126002876
+0175100007026000034
+0175100007026000035
+0179200001526000034
+0187300010126000039
+0190200000326005528
+0190200000326005543
+0190200000326005545
+0190200000326005554
+0190200000326005562
+0190200000326005575
+0190200000326005577
+0190200000326005586
+0190200000326005601
+0190200000326005603
+0190200000326005605
+0190200000326005609
+0194200000526003520
+0194200000526003525
+0194200000526003533
+0194200000526003562
+0242100000126000054
+0301000000226000575
+0301600006226000052
+0303200071126000051
+0303300076226000010
+0303300076226000011
+0306100005926000027
+0311200029126000025
+0311500001926000062
+0311500001926000063
+0318100057226000043
+0318100057226000044
+0318100057226000045
+0318100073426000086
+0318200028126000812
+0318300167826000234
+0318300445026000004
+0319200066226000118
+0319200068026000069
+0319300001726000001
+0319300010126000247
+0324100001826000168
+0324100001826000172
+0324100003326000099
+0324200033926000001
+0328300034726000167
+0330200000526000070
+0330200012726000061
+0330300011226000153
+0330300184726000097
+0335200007926000009
+0340100000226000419
+0340200003326006463
+0340200003326006464
+0340200003326006465
+0340200003326006466
+0340200003326006467
+0340200003326006468
+0340200003326006469
+0340200003326006470
+0340200003326006471
+0340200003326006472
+0340200003326006473
+0340200003326006474
+0340200003326006475
+0340200003326006476
+0340200003326006477
+0340200003326006478
+0340200003326006479
+0340200003326006480
+0342100011826000322
+0346200000726000024
+0348100015526000323
+0348100015526000324
+0348100015526000325
+0348200005226000029
+0350200014926000051
+0352100001226000014
+0352100002026000174
+0356100001426000070
+0356200004226000088
+0356500001426004140
+0356500001426004141
+0358200041326000312
+0358300000526000224
+0358300077226000111
+0360300001326000391
+0360300001326000392
+0360300011326000077
+0362100030226000224
+0362300231026000045
+0366300042526000023
+0366300042526000024
+0368200000726000007
+0368400000226000758
+0368400000226000762
+0369100040226000328
+0372100001026000205
+0372100030626000666
+0372100030626000668
+0372100030626000670
+0372100030626000671
+0372100034626000130
+0372100034626000131
+0372100048826000805
+0372100048826000808
+0372200044326000074
+0372200082626000049
+0372200125426000017
+0372200131726000446
+0372200131726000447
+0372200175726000002
+0372500006526000026
+0372500015526000024
+0373100031326000019
+0373100031326000020
+0373100032626000274
+0373100032626000277
+0373100032626000278
+0373100032626000281
+0373100032626000288
+0373100034226000010
+0373100094326000550
+0373100094326000553
+0373100094326000561
+0373100094326000563
+0373200014226000307
+0373200015026000336
+0373200015026000337
+0373200018126000073
+0373200027426000967
+0373200053626000205
+0373200068626000277
+0373200081126000017
+0373200564026000022
+0373200638526000019
+0375100001326000027
+0375400000926000082
+0387300023226000107
+0387300023226000109
+0573100024326000034
+0744200000226003999
+0744200000226004001
+0804200000126000185
+0815500000526006941
+0815500000526006943
+0815500000526006944
+0817200000326007098
+0817200000326007225
+0818500004726000021
+0825500000726001233
+0825500000726001235
+0825500000726001240
+0825500000726001241
+0826500000926001456
+0829500001126003213
+0831500000126000002
+0843500000226002612
+0843500000226002618
+0845600007026000013
+0853500000326003395
+0855200000526001818
+0855200000526001819
+0855200000526001820
+0855200000526001821
+0855200000526001822
+0855200000526001823
+0855200000526001824
+0855200000526001825
+0855200000526001826
+0860100002126000020
+0860200000826004218
+0860200000826004226
+0864500000226001473
+0864500000226001476
+0873400003626000040
+0873500002326000206
+2100700000926000013
+
+
+
 ### File: PowerShell.txt ###
 
 === НАЧАЛО: 15 ОСНОВНЫХ КОМАНД POWERSHELL ===
@@ -293,14 +537,14 @@ Write-Host "📦 Размер: $([math]::Round((Get-Item $output).Length/1KB,1))
 
 ### File: Program.cs ###
 
-// File: Program.cs
-using QwenWeb.Services.Documents;
 using Microsoft.EntityFrameworkCore;
 using QwenWeb.Components;
 using QwenWeb.Configuration;
 using QwenWeb.Data;
-using QwenWeb.Services;
+using QwenWeb.Models;
+using QwenWeb.Services.Monitoring;
 using System;
+using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -309,32 +553,77 @@ MonitorSettings monitorSettings = new MonitorSettings();
 builder.Configuration.GetSection("MonitorSettings").Bind(monitorSettings);
 builder.Services.AddSingleton<MonitorSettings>(monitorSettings);
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddDbContext<TenderMonitorDbContext>(options =>
     options.UseSqlite(builder.Configuration["MonitorSettings:DbPath"] ?? "Data Source=monitor_test.db"));
 
-builder.Services.AddSingleton<TenderMonitorBackgroundService>();
-builder.Services.AddHostedService(sp => sp.GetRequiredService<TenderMonitorBackgroundService>());
+// ❌ Старый сервис — отключён
+// builder.Services.AddSingleton<TenderMonitorBackgroundService>();
+// builder.Services.AddHostedService(sp => sp.GetRequiredService<TenderMonitorBackgroundService>());
 
 // ✅ Razor Components + Interactive Server
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// ✅ EisDocumentService — регистрируем как Singleton (управляет своим HttpClient с сессией)
+// ✅ EisDocumentService — Singleton (управляет сессией ЕИС)
 builder.Services.AddSingleton<QwenWeb.Services.Documents.EisDocumentService>();
 
+// ✅ MonitorProfileManager — Singleton (управляет фоновым циклом профилей)
+builder.Services.AddSingleton<MonitorProfileManager>();
+
+// 🔹 Асинхронный Main для поддержки await
 var app = builder.Build();
 
-// 🔹 Инициализация БД мониторинга (ЕИС)
+// 🔹 Инициализация БД + Seed тестовых данных + Запуск менеджера
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
-    db.Database.EnsureCreated();
+
+    // Seed: добавляем тестовый профиль, если таблица пуста
+    if (!db.MonitorProfiles.Any())
+    {
+        db.MonitorProfiles.Add(new MonitorProfile
+        {
+            Name = "Тест: Иркутская область, 44-ФЗ",
+            IsActive = true,
+            RegionCode = "38000000000",
+            LawType = "44",
+            PollIntervalMinutes = 5
+        });
+        await db.SaveChangesAsync();
+    }
+
+    // 🔹 Запускаем MonitorProfileManager
+    var manager = scope.ServiceProvider.GetRequiredService<MonitorProfileManager>();
+    manager.Start();
 }
 
 app.UseStaticFiles();
 app.UseAntiforgery();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
-app.Run();
+
+// 🔹 временный тест: сбор regnumber через браузер (только иркутская область)
+// удалить после проверки
+try
+{
+   //await QwenWeb.Services.Monitoring.BrowserScraperTest.RunAsync();
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"[TEST ERROR] BrowserScraperTest: {ex.Message}");
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
+    var profile = await db.MonitorProfiles.FindAsync(6);
+    Console.WriteLine($"[DEBUG] Profile #6 SearchUrl length: {profile?.SearchUrl?.Length ?? 0}");
+    Console.WriteLine($"[DEBUG] Preview: {profile?.SearchUrl?.Substring(0, Math.Min(500, profile.SearchUrl.Length))}");
+    Console.WriteLine($"[DEBUG] Contains customerPlace: {profile?.SearchUrl?.Contains("customerPlace")}");
+}
+// 🔹 Асинхронный запуск приложения
+await app.RunAsync();
 
 
 ### File: PromtContext.txt ###
@@ -394,6 +683,7 @@ collect.ps1 Должен быть создан в корне, в нем скри
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Playwright" Version="1.59.0" />
     <PackageReference Include="System.IO.Packaging" Version="10.0.7" />
     <PackageReference Include="UglyToad.PdfPig" Version="1.7.0-custom-5" />
   </ItemGroup>
@@ -453,241 +743,24 @@ collect.ps1 Должен быть создан в корне, в нем скри
 ### File: Components\App.razor ###
 
 <!DOCTYPE html>
-<html lang="en">
-
-<!-- Components/App.razor -->
+<html lang="ru">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="app.css" />
-    <link rel="stylesheet" href="css/chat.css" /> <!-- ⭐ ДОБАВЬТЕ ЭТУ СТРОКУ -->
-    <link rel="stylesheet" href="QwenWeb.styles.css" />  <!-- ⭐ ДОБАВИТЬ -->
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/chat.css" />
+    <link rel="stylesheet" href="QwenWeb.styles.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
 </head>
-
 <body>
     <Routes />
     <script src="_framework/blazor.web.js"></script>
 </body>
-
 </html>
-
-
-
-### File: Components\FuturisticConsole.razor ###
-
-@namespace QwenWeb.Components
-@implements IDisposable
-@inject Microsoft.JSInterop.IJSRuntime JS
-
-<div class="cyber-console">
-    <div class="console-header">
-        <span>🖥️ КОНСОЛЬ МОНИТОРИНГА</span>
-        <span class="badge-status">@statusText</span>
-    </div>
-
-    <!-- LED-индикаторы -->
-    <div class="console-leds">
-        <div class="led-row">
-            <span class="led-label">NET</span>
-            <span class="led-dot" style="background-color: @netLedColor"></span>
-        </div>
-        <div class="led-row">
-            <span class="led-label">DB</span>
-            <span class="led-dot led-db-static"></span>
-        </div>
-        <div class="led-row">
-            <span class="led-label">CPU</span>
-            <span class="led-dot" style="background-color: @cpuLedColor"></span>
-        </div>
-    </div>
-
-    <!-- Метаданные сессии -->
-    <div class="console-meta">
-        <span>SESSION: @sessionId</span>
-        <span>PROTO: TLS 1.3</span>
-        <span>ENCRYPT: AES-256-GCM</span>
-    </div>
-
-    <!-- Логи -->
-    <div class="console-logs" @ref="logScrollContainer">
-        @foreach (LogEntry entry in logs)
-        {
-            <div class="log-line log-@entry.Level">@entry.Text</div>
-        }
-        <div class="cursor-blink">█</div>
-    </div>
-
-    <!-- Метрики + Sparkline -->
-    <div class="console-metrics">
-        <div class="metric-group">
-            <span>CPU</span>
-            <div class="sparkline">
-                @foreach (double val in cpuHistory)
-                {
-                    <div class="spark-bar" style="height: @val.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)%"></div>
-                }
-            </div>
-            <span class="metric-val">@cpuLoad.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)%</span>
-        </div>
-        <div class="metric-group">
-            <span>Потоки</span>
-            <span class="metric-val">@threadCount.ToString()</span>
-        </div>
-        <div class="metric-group">
-            <span>Сессия</span>
-            <span class="metric-val">@sessionTime</span>
-        </div>
-    </div>
-
-    <!-- CRT Scanline Overlay -->
-    <div class="scanlines"></div>
-</div>
-
-<script>
-    window.scrollToBottom = (element) => {
-        if (element) element.scrollTop = element.scrollHeight;
-    };
-</script>
-
-@code {
-    private readonly List<LogEntry> logs = new List<LogEntry>();
-    private readonly List<double> cpuHistory = new List<double>();
-    private ElementReference logScrollContainer;
-    private bool _needsScroll;
-    private double cpuLoad = 0.0;
-    private int threadCount = 0;
-    private string sessionTime = "00:00:00";
-    private DateTime sessionStart = DateTime.UtcNow;
-    private string statusText = "ONLINE";
-    private string sessionId = string.Empty;
-    private string netLedColor = "#00ffcc";
-    private string cpuLedColor = "#00ffcc";
-    private PeriodicTimer? updateTimer;
-    private CancellationTokenSource? cts;
-    private int logCounter = 0;
-
-    protected override void OnInitialized()
-    {
-        sessionId = GenerateSessionHash();
-        cts = new CancellationTokenSource();
-        updateTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-        _ = RunUpdateLoopAsync(cts.Token);
-        AddSystemLog("[SYS] Инициализация модуля мониторинга... OK");
-        AddSystemLog("[CFG] Загрузка директив из ядра конфигурации... 4 параметра");
-        AddSystemLog("[SEC] Проверка целостности соединения... PASS");
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_needsScroll)
-        {
-            await JS.InvokeVoidAsync("scrollToBottom", logScrollContainer);
-            _needsScroll = false;
-        }
-    }
-
-    private async Task RunUpdateLoopAsync(CancellationToken token)
-    {
-        try
-        {
-            while (!token.IsCancellationRequested && await updateTimer!.WaitForNextTickAsync(token))
-            {
-                UpdateMetrics();
-                GenerateAtmosphericLog();
-                await InvokeAsync(StateHasChanged);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Нормальное завершение
-        }
-    }
-
-    private void UpdateMetrics()
-    {
-        System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-        double cpuTimeMs = currentProcess.TotalProcessorTime.TotalMilliseconds;
-        double elapsedMs = (DateTime.UtcNow - sessionStart).TotalMilliseconds;
-
-        if (elapsedMs > 0)
-        {
-            double roughLoad = (cpuTimeMs / elapsedMs) * 100.0;
-            cpuLoad = Math.Min(100.0, Math.Max(0.0, roughLoad * 1.5));
-        }
-
-        // Обновляем историю для sparkline
-        cpuHistory.Add(cpuLoad);
-        if (cpuHistory.Count > 20)
-        {
-            cpuHistory.RemoveAt(0);
-        }
-
-        // LED логика (симуляция порогов)
-        netLedColor = cpuLoad > 60 ? "#ff4444" : cpuLoad > 30 ? "#ffcc00" : "#00ffcc";
-        cpuLedColor = cpuLoad > 75 ? "#ff4444" : cpuLoad > 40 ? "#ffcc00" : "#00ffcc";
-
-        threadCount = currentProcess.Threads.Count;
-        TimeSpan elapsed = DateTime.UtcNow - sessionStart;
-        sessionTime = elapsed.ToString("hh\\:mm\\:ss");
-    }
-
-    private void GenerateAtmosphericLog()
-    {
-        logCounter++;
-        string timestamp = DateTime.Now.ToString("HH:mm:ss");
-        string message = string.Empty;
-
-        if (logCounter % 12 == 0) message = $"[{timestamp}] [DB] Синхронизация индексов... PASS";
-        else if (logCounter % 19 == 0) message = $"[{timestamp}] [NET] Пинг шлюза RSS... {new Random().Next(110, 280)} мс";
-        else if (logCounter % 25 == 0) message = $"[{timestamp}] [SEC] Верификация токена... OK";
-        else if (logCounter % 33 == 0) message = $"[{timestamp}] [MEM] Сборка мусора... {new Random().Next(1, 5)} мс";
-        else if (logCounter % 40 == 0) message = $"[{timestamp}] [CORE] Ожидание следующего цикла...";
-        else return;
-
-        AddSystemLog(message);
-    }
-
-    private void AddSystemLog(string message)
-    {
-        string level = "SYS";
-        if (message.Contains("[NET]")) level = "NET";
-        else if (message.Contains("[DB]")) level = "DB";
-        else if (message.Contains("[SEC]")) level = "SEC";
-        else if (message.Contains("[ERR]")) level = "ERR";
-
-        logs.Add(new LogEntry { Text = message, Level = level });
-        _needsScroll = true;
-
-        if (logs.Count > 100)
-        {
-            logs.RemoveRange(0, 40);
-        }
-    }
-
-    private static string GenerateSessionHash()
-    {
-        byte[] bytes = new byte[16];
-        new Random().NextBytes(bytes);
-        return BitConverter.ToString(bytes).Replace("-", string.Empty).Substring(0, 8);
-    }
-
-    public void Dispose()
-    {
-        cts?.Cancel();
-        updateTimer?.Dispose();
-        cts?.Dispose();
-    }
-
-    private class LogEntry
-    {
-        public string Text { get; set; } = string.Empty;
-        public string Level { get; set; } = string.Empty;
-    }
-}
 
 
 ### File: Components\Routes.razor ###
@@ -706,56 +779,79 @@ collect.ps1 Должен быть создан в корне, в нем скри
 @using QwenWeb.Models
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
 
-<div class="card mb-3 shadow-sm tender-card" @onclick="OpenDetails">
+@code {
+    [Parameter] public TenderDisplayItem Item { get; set; } = default!;
+}
+
+<div class="card mb-3 shadow-sm tender-card" @onclick="OpenDetails" style="cursor: pointer;">
     <div class="card-body p-3">
         <div class="d-flex justify-content-between align-items-start mb-2">
-            <h6 class="card-title mb-0 fw-bold text-truncate tender-card-title">
-                @Item.ParsedInfo.ObjectName
+            <h6 class="card-title mb-0 fw-bold text-truncate tender-card-title" style="max-width: 70%;">
+                @* 🔹 безопасное получение названия *@
+                @(Item?.ParsedInfo?.ObjectName ?? Item?.Record?.Title ?? "Без названия")
             </h6>
             <div class="d-flex gap-2 flex-shrink-0">
-                @if (!string.IsNullOrEmpty(Item.ParsedInfo.LawType))
+                @* 🔹 закон (если есть) *@
+                @if (!string.IsNullOrEmpty(Item?.ParsedInfo?.LawType))
                 {
                     <span class="badge bg-primary">@Item.ParsedInfo.LawType</span>
                 }
-                @if (!string.IsNullOrEmpty(Item.ParsedInfo.Stage))
+                @* 🔹 цена из записи (не из ParsedInfo) *@
+                @if (Item?.Record?.InitialPrice.HasValue == true)
                 {
-                    <span class="badge @(GetStageBadgeClass(Item.ParsedInfo.Stage))">@Item.ParsedInfo.Stage</span>
+                    <span class="badge bg-success">@(((decimal)Item.Record.InitialPrice).ToString("N0")) ₽</span>
                 }
             </div>
         </div>
-        <div class="row text-muted small mb-2">
-            <div class="col-12 col-md-8 mb-1">
-                🏢 <span class="text-dark">@Item.ParsedInfo.Customer</span>
-            </div>
-            @if (Item.ParsedInfo.InitialPrice.HasValue)
+
+        <div class="text-muted small mb-2">
+            @* 🔹 только безопасные поля из Record *@
+            @if (!string.IsNullOrEmpty(Item?.Record?.RegionCode))
             {
-                <div class="col-12 col-md-4 text-md-end fw-bold text-success">
-                    💰 @Item.ParsedInfo.InitialPrice.Value.ToString("N2", System.Globalization.CultureInfo.CurrentCulture) @Item.ParsedInfo.Currency
-                </div>
+                <span>📍 @Item.Record.RegionCode</span>
+                <span class="mx-1">•</span>
             }
+            @* заказчик пока не отображаем, пока не знаем точные свойства в ParsedInfo *@
         </div>
-        <div class="text-muted small border-top pt-2 mt-2">
-            📅 @(Item.Record.PubDate?.ToString("dd.MM.yyyy HH:mm") ?? "Дата не указана")
+
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                @* 🔹 дата публикации *@
+                @if (Item?.Record?.PubDate.HasValue == true)
+                {
+                    <span>📅 @Item.Record.PubDate?.ToString("dd.MM.yyyy")</span>
+                }
+                @* 🔹 номер закупки *@
+                @if (!string.IsNullOrEmpty(Item?.Record?.RegNumber))
+                {
+                    <span class="mx-2">•</span>
+                    <code>@Item.Record.RegNumber</code>
+                }
+            </small>
+            @* 🔹 статус обработки *@
+            @if (Item?.Record?.Status == "raw")
+            {
+                <span class="badge bg-warning text-dark">⏳ обработка</span>
+            }
+            else if (Item?.Record?.Status == "processed")
+            {
+                <span class="badge bg-success">✓ готово</span>
+            }
+            else if (Item?.Record?.Status == "error")
+            {
+                <span class="badge bg-danger">⚠ ошибка</span>
+            }
         </div>
     </div>
 </div>
 
 @code {
-    [Parameter] public required QwenWeb.Models.TenderDisplayItem Item { get; set; } = null!;
-
-    private string GetStageBadgeClass(string stage)
-    {
-        if (string.IsNullOrEmpty(stage)) return "bg-secondary";
-
-        return stage.Contains("Подача", System.StringComparison.OrdinalIgnoreCase) ? "bg-success" :
-                       stage.Contains("Завершена", System.StringComparison.OrdinalIgnoreCase) ? "bg-secondary" :
-                       stage.Contains("Отменена", System.StringComparison.OrdinalIgnoreCase) ? "bg-danger" : "bg-info";
-    }
-
     private void OpenDetails()
     {
-        string encodedLink = System.Uri.EscapeDataString(Item.Record.Link);
-        NavigationManager.NavigateTo($"/tender?link={encodedLink}");
+        if (Item?.Record?.Id > 0)
+        {
+            NavigationManager.NavigateTo($"/monitor/tenders/{Item.Record.Id}");
+        }
     }
 }
 
@@ -829,7 +925,6 @@ collect.ps1 Должен быть создан в корне, в нем скри
             </NavLink>
         </div>
 
-        <!-- Пример: добавьте эту строку в список ссылок -->
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="chat">
                 <span class="bi bi-chat-left-text" aria-hidden="true"></span> Чат с Qwen
@@ -841,12 +936,14 @@ collect.ps1 Должен быть создан в корне, в нем скри
                 <span class="bi bi-rss"></span> Госзакупки
             </NavLink>
         </div>
+
         <div class="nav-item px-3">
-              <NavLink class="nav-link" href="tenderplan">
+            <NavLink class="nav-link" href="tenderplan">
                 <span class="bi bi-server"></span> 📊 Tenderplan API
-        </NavLink>
-    </div>
-       @*  <div class="nav-item px-3">
+            </NavLink>
+        </div>
+
+        @* <div class="nav-item px-3">
             <NavLink class="nav-link" href="counter">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
             </NavLink>
@@ -857,10 +954,10 @@ collect.ps1 Должен быть создан в корне, в нем скри
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
             </NavLink>
         </div> *@
+
+       
     </nav>
 </div>
-
-
 
 
 ### File: Components\Pages\Chat.razor ###
@@ -1586,7 +1683,7 @@ else
                     <!-- Область ответа -->
                     @if (!string.IsNullOrEmpty(AiResponse) || IsAiLoading)
                     {
-                        <div class="p-3 bg-white border rounded small ai-response ai-response-box">
+                        <div class="p-3 border rounded small ai-response ai-response-box">
 
                             @if (IsAiLoading && string.IsNullOrEmpty(AiResponse))
                             {
@@ -2094,196 +2191,14 @@ else
 
 @page "/monitor"
 @rendermode InteractiveServer
-@using Microsoft.EntityFrameworkCore
-@using System.Threading
-@using QwenWeb.Services.Parsing
-@inject QwenWeb.Data.TenderMonitorDbContext MonitorDb
-@inject QwenWeb.Services.TenderMonitorBackgroundService MonitorService
-@inject QwenWeb.Configuration.MonitorSettings MonitorSettings
-@implements IDisposable
-@using QwenWeb.Components
+@inject NavigationManager Navigation
 
-<h3>📊 Тестовый мониторинг госзакупок</h3>
-
-<div class="w-100 overflow-hidden mb-3">
-    <FuturisticConsole />
- </div>
-
-<div class="alert alert-warning mb-4">
-    ⚠️ <strong>Экспериментальный модуль:</strong> @($"Опрос RSS каждые {MonitorSettings.PollIntervalMinutes} мин. Данные хранятся в отдельной БД <code>monitor_test.db</code>.")
-</div>
-
-<div class="mb-4 p-3 bg-light rounded">
-    <div class="d-flex align-items-center gap-3 flex-wrap">
-        <label class="form-label mb-0 fw-bold">Интервал опроса:</label>
-        <select class="form-select interval-select"
-                value="@MonitorSettings.PollIntervalMinutes"
-                @onchange="OnIntervalChangedAsync">
-            <option value="2">2 минуты (тест)</option>
-            <option value="5">5 минут (тест)</option>
-            <option value="15">15 минут</option>
-            <option value="30">30 минут (рекомендуется)</option>
-            <option value="60">60 минут</option>
-        </select>
-        <small class="text-muted">Изменение применится к следующему циклу. Опрос запустится сразу.</small>
-    </div>
-</div>
-
-<div class="alert alert-info d-flex justify-content-between align-items-center flex-wrap gap-3">
-    <div>
-        <strong>Всего опросов:</strong> @MonitorService.TotalPollsCount.ToString()<br />
-        <strong>Последний запуск:</strong> @(MonitorService.LastRunTimeUtc == DateTime.MinValue ? "Ещё не запускался" : MonitorService.LastRunTimeUtc.ToString("dd.MM.yyyy HH:mm"))<br />
-        <strong>Следующий опрос через:</strong> <span class="fw-bold text-primary">@countdownText</span><br />
-        <strong>Найдено за раз:</strong>
-        @if (MonitorService.IsErrorLastRun)
-        {
-            <span class="text-danger fw-bold">Ошибка сети (возможно 403)</span>
-        }
-        else
-        {
-            @(MonitorService.NewTendersFoundLastRun == 0 ? "0 новых" : MonitorService.NewTendersFoundLastRun.ToString() + " новых")
-        }
-        <br />
-        <strong>Всего в базе:</strong> @totalCount.ToString()
-    </div>
-    <button class="btn btn-outline-primary" @onclick="RunManualCheck" disabled="@(MonitorService.LastRunTimeUtc > DateTime.UtcNow.AddMinutes(-1))">
-        🔄 Проверить сейчас
-    </button>
-</div>
-
-@if (displayItems.Count == 0)
-{
-    <div class="text-center py-5 text-muted">
-        Загрузка данных из базы или ожидание первого цикла мониторинга...
-    </div>
-}
-else
-{
-    <div class="list-group">
-        @foreach (QwenWeb.Models.TenderDisplayItem item in displayItems)
-        {
-            <QwenWeb.Components.TenderCard Item="item" />
-        }
-    </div>
-}
-
+@* 🔹 Страница-заглушка: автоматический редирект на новый дашборд *@
 @code {
-    private List<QwenWeb.Models.TenderDisplayItem> displayItems = new List<QwenWeb.Models.TenderDisplayItem>();
-    private int totalCount = 0;
-    private string countdownText = "—";
-    private PeriodicTimer? countdownTimer;
-    private CancellationTokenSource? countdownCts;
-
     protected override void OnInitialized()
     {
-        countdownCts = new CancellationTokenSource();
-        countdownTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-        _ = UpdateCountdownLoop(countdownCts.Token);
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadFromDatabaseAsync();
-    }
-
-    private async Task UpdateCountdownLoop(CancellationToken token)
-    {
-        try
-        {
-            while (!token.IsCancellationRequested && await countdownTimer!.WaitForNextTickAsync(token))
-            {
-                UpdateCountdownText();
-                await InvokeAsync(StateHasChanged);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Нормальное завершение
-        }
-    }
-
-    private void UpdateCountdownText()
-    {
-        if (MonitorService.LastRunTimeUtc == DateTime.MinValue)
-        {
-            countdownText = "ожидание первого запуска...";
-            return;
-        }
-
-        int intervalMinutes = MonitorSettings.PollIntervalMinutes;
-        DateTime nextRun = MonitorService.LastRunTimeUtc.AddMinutes(intervalMinutes);
-        TimeSpan remaining = nextRun - DateTime.UtcNow;
-
-        if (remaining.TotalSeconds <= 0)
-        {
-            countdownText = "запуск...";
-        }
-        else
-        {
-            int minutes = (int)remaining.TotalMinutes;
-            int seconds = remaining.Seconds;
-            countdownText = $"{minutes:D2}:{seconds:D2}";
-        }
-    }
-
-    private async Task OnIntervalChangedAsync(ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out int newInterval))
-        {
-            MonitorSettings.PollIntervalMinutes = newInterval;
-            StateHasChanged();
-            await RunManualCheck();
-            MonitorService.ResetDelay();
-        }
-    }
-
-    private async Task LoadFromDatabaseAsync()
-    {
-        try
-        {
-            List<QwenWeb.Models.TenderMonitorRecord> rawRecords = await MonitorDb.Tenders
-               .OrderByDescending(t => t.PubDate)
-               .ThenByDescending(t => t.CreatedAtUtc)
-               .ToListAsync();
-
-            displayItems = new List<QwenWeb.Models.TenderDisplayItem>(rawRecords.Count);
-
-            foreach (QwenWeb.Models.TenderMonitorRecord record in rawRecords)
-            {
-                QwenWeb.Models.ParsedTenderInfo parsed = TenderInfoParser.Parse(record.Description);
-                displayItems.Add(new QwenWeb.Models.TenderDisplayItem
-                {
-                    Record = record,
-                    ParsedInfo = parsed
-                });
-            }
-
-            totalCount = displayItems.Count;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[ERROR] LoadFromDatabaseAsync: {ex.Message}");
-            displayItems = new List<QwenWeb.Models.TenderDisplayItem>();
-            totalCount = 0;
-        }
-        finally
-        {
-            UpdateCountdownText();
-            StateHasChanged();
-        }
-    }
-
-    private async Task RunManualCheck()
-    {
-        await MonitorService.RunManualAsync();
-        await LoadFromDatabaseAsync();
-    }
-
-    public void Dispose()
-    {
-        countdownCts?.Cancel();
-        countdownTimer?.Dispose();
-        countdownCts?.Dispose();
+        // Перенаправляем на новый дашборд профилей
+        Navigation.NavigateTo("/monitor/dashboard", replace: true);
     }
 }
 
@@ -2485,6 +2400,590 @@ else
 
 
 
+### File: Components\Pages\Monitor\Dashboard.razor ###
+
+@page "/monitor/dashboard"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using QwenWeb.Data
+@using QwenWeb.Models
+@using QwenWeb.Services.Monitoring
+
+@inject MonitorProfileManager ProfileManager
+@inject TenderMonitorDbContext Db
+@inject Microsoft.JSInterop.IJSRuntime JsRuntime
+
+<h3>📊 Мониторинг закупок — профили</h3>
+
+<div class="alert alert-info d-flex justify-content-between align-items-center">
+    <div>
+        <strong>Всего закупок в базе:</strong> @totalTendersCount.ToString("N0")
+    </div>
+    <a href="/monitor/profiles/create" class="btn btn-sm btn-primary">
+        ➕ Добавить профиль
+    </a>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Загрузка профилей...</p>
+    </div>
+}
+else if (profiles.Count == 0)
+{
+    <div class="alert alert-warning">
+        Нет активных профилей мониторинга.
+        <a href="/monitor/profiles/create" class="alert-link">Создать первый профиль</a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var profile in profiles)
+        {
+            <div class="col-md-6 col-lg-4" @key="profile.Id">
+                <ProfileCard Profile="profile"
+                             Stats="stats"
+                             OnStart="(id) => ToggleProfileAsync(id, true)"
+                             OnStop="(id) => ToggleProfileAsync(id, false)"
+                             OnDelete="DeleteProfileAsync" />
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<MonitorProfile> profiles = new();
+    private IReadOnlyDictionary<int, MonitorProfileManager.ProfileStats>? stats;
+    private bool isLoading = true;
+    private int totalTendersCount = 0;
+    private PeriodicTimer? refreshTimer;
+    private CancellationTokenSource? refreshCts;
+
+    protected override void OnInitialized()
+    {
+        refreshCts = new CancellationTokenSource();
+        refreshTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+        _ = RefreshLoopAsync(refreshCts.Token);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            profiles = await Db.MonitorProfiles
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+
+            totalTendersCount = await Db.Tenders.CountAsync();
+            stats = ProfileManager.GetStats();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] LoadDataAsync: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RefreshLoopAsync(CancellationToken token)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested && await refreshTimer!.WaitForNextTickAsync(token))
+            {
+                stats = ProfileManager.GetStats();
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task ToggleProfileAsync(int profileId, bool activate)
+    {
+        try
+        {
+            await ProfileManager.ToggleProfileAsync(profileId, activate);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] ToggleProfileAsync: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteProfileAsync(int profileId)
+    {
+        try
+        {
+            // Простое подтверждение через JS
+            var confirm = await JsRuntime.InvokeAsync<bool>("confirm", "Удалить этот профиль мониторинга? Найденные закупки останутся в базе.");
+            if (!confirm) return;
+
+            await ProfileManager.DeleteProfileAsync(profileId);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] DeleteProfileAsync: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        refreshCts?.Cancel();
+        refreshTimer?.Dispose();
+        refreshCts?.Dispose();
+    }
+}
+
+
+### File: Components\Pages\Monitor\ProfileCard.razor ###
+
+@using QwenWeb.Models
+@using QwenWeb.Services.Monitoring
+
+<div class="card h-100">
+    <div class="card-body">
+        <h6 class="card-title">@Profile.Name</h6>
+        <p class="card-text small text-muted mb-1">
+            🌍 @GetRegionName(Profile.RegionCode) | ⚖️ @Profile.LawType-ФЗ
+        </p>
+        <p class="card-text small mb-2">
+            ⏱ Интервал: @Profile.PollIntervalMinutes мин
+        </p>
+
+        @if (Stats?.TryGetValue(Profile.Id, out var stat) == true)
+        {
+            <p class="card-text small mb-1">
+                📥 Найдено: <strong>@stat.LastFoundCount</strong>
+            </p>
+            <p class="card-text small text-muted">
+                🕐 Последнее: @(stat.LastRunAt?.ToString("HH:mm") ?? "—")
+            </p>
+            @if (!string.IsNullOrWhiteSpace(stat.LastError))
+            {
+                <p class="card-text small text-danger">⚠️ @stat.LastError</p>
+            }
+        }
+        else
+        {
+            <p class="card-text small text-muted">🕐 Ожидание первого запуска...</p>
+        }
+    </div>
+
+    <div class="card-footer bg-transparent border-top-0 d-flex gap-2 flex-wrap">
+        <a href="/monitor/profiles/@Profile.Id/tenders" class="btn btn-sm btn-outline-primary">🔍 Закупки</a>
+        <a href="/monitor/profiles/edit/@Profile.Id" class="btn btn-sm btn-outline-secondary">✏️</a>
+
+        @if (Profile.IsActive)
+        {
+            <button class="btn btn-sm btn-outline-warning" @onclick="HandleStopAsync" disabled="@isProcessing">⏹ Стоп</button>
+        }
+        else
+        {
+            <button class="btn btn-sm btn-outline-success" @onclick="HandleStartAsync" disabled="@isProcessing">▶ Старт</button>
+        }
+
+        <button class="btn btn-sm btn-outline-danger" @onclick="HandleDeleteAsync" disabled="@isProcessing">🗑</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public required MonitorProfile Profile { get; set; } = null!;
+    [Parameter] public IReadOnlyDictionary<int, MonitorProfileManager.ProfileStats>? Stats { get; set; }
+
+    [Parameter] public EventCallback<int> OnStart { get; set; }
+    [Parameter] public EventCallback<int> OnStop { get; set; }
+    [Parameter] public EventCallback<int> OnDelete { get; set; }
+
+    private bool isProcessing;
+
+    private async Task HandleStartAsync()
+    {
+        if (isProcessing) return;
+        isProcessing = true;
+        try { await OnStart.InvokeAsync(Profile.Id); }
+        finally { isProcessing = false; }
+    }
+
+    private async Task HandleStopAsync()
+    {
+        if (isProcessing) return;
+        isProcessing = true;
+        try { await OnStop.InvokeAsync(Profile.Id); }
+        finally { isProcessing = false; }
+    }
+
+    private async Task HandleDeleteAsync()
+    {
+        if (isProcessing) return;
+        isProcessing = true;
+        try { await OnDelete.InvokeAsync(Profile.Id); }
+        finally { isProcessing = false; }
+    }
+
+    private static string GetRegionName(string code) => code switch
+    {
+        "38000000000" => "Иркутская обл.",
+        "24000000000" => "Красноярский край",
+        "54000000000" => "Новосибирская обл.",
+        "75000000000" => "Забайкальский край",
+        "27000000000" => "Хабаровский край",
+        "28000000000" => "Амурская обл.",
+        "79000000000" => "ЕАО",
+        "87000000000" => "Чукотка",
+        _ => $"Код: {code}"
+    };
+}
+
+
+### File: Components\Pages\Monitor\ProfileForm.razor ###
+
+@page "/monitor/profiles/create"
+@page "/monitor/profiles/edit/{ProfileId:int}"
+@rendermode InteractiveServer
+@using QwenWeb.Data
+@using QwenWeb.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject TenderMonitorDbContext Db
+@inject NavigationManager Navigation
+
+<h3>@(IsEdit ? "✏️ Редактирование профиля" : "➕ Новый профиль мониторинга")</h3>
+
+<div class="alert alert-info">
+    <strong>как настроить:</strong>
+    <ol class="mb-0 mt-1">
+        <li>откройте <a href="https://zakupki.gov.ru" target="_blank">zakupki.gov.ru</a></li>
+        <li>настройте фильтры: регион, закон, статус, дата</li>
+        <li>скопируйте ссылку из адресной строки браузера</li>
+        <li>вставьте её в поле ниже</li>
+    </ol>
+</div>
+
+<EditForm Model="Profile" OnValidSubmit="HandleSubmitAsync" class="mt-4">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="alert alert-danger" />
+
+    <div class="row g-3">
+        <!-- Название профиля -->
+        <div class="col-12">
+            <label class="form-label">Название профиля</label>
+            <InputText @bind-Value="Profile.Name" class="form-control" placeholder="Например: Иркутская область, 44-ФЗ, подача заявок" />
+            <ValidationMessage For="@(() => Profile.Name)" class="text-danger small" />
+        </div>
+
+        <!-- Ссылка поиска ЕИС -->
+        <div class="col-12">
+            <label class="form-label">Ссылка поиска из ЕИС</label>
+            <InputText @bind-Value="Profile.SearchUrl" class="form-control" placeholder="https://zakupki.gov.ru/epz/order/extendedsearch/results.html?..." />
+            <ValidationMessage For="@(() => Profile.SearchUrl)" class="text-danger small" />
+            <div class="form-text">
+                ссылка должна содержать <code>results.html</code> и параметр <code>publishDateFrom</code>.
+                дата будет автоматически заменяться на текущую при каждом запуске.
+            </div>
+        </div>
+
+        <!-- Интервал опроса (опционально) -->
+        <div class="col-md-3">
+            <label class="form-label">Интервал (мин)</label>
+            <InputNumber @bind-Value="Profile.PollIntervalMinutes" class="form-control" min="60" max="1440" />
+            <ValidationMessage For="@(() => Profile.PollIntervalMinutes)" class="text-danger small" />
+        </div>
+
+        <!-- Активность -->
+        <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check">
+                <InputCheckbox @bind-Value="Profile.IsActive" class="form-check-input" />
+                <label class="form-check-label">Активен</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+            @if (isSaving)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            @(IsEdit ? "Сохранить изменения" : "Создать профиль")
+        </button>
+        <button type="button" class="btn btn-outline-secondary" @onclick="CancelAsync">Отмена</button>
+    </div>
+</EditForm>
+
+@code {
+    [SupplyParameterFromQuery]
+    [Parameter]
+    public int? ProfileId { get; set; }
+
+    public bool IsEdit => ProfileId.HasValue;
+
+    private MonitorProfile Profile = new();
+    private bool isSaving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit && ProfileId.HasValue)
+        {
+            var profile = await Db.MonitorProfiles.FindAsync(ProfileId.Value);
+            if (profile == null)
+            {
+                Navigation.NavigateTo("/monitor/dashboard", replace: true);
+                return;
+            }
+            Profile = new MonitorProfile
+            {
+                Id = profile.Id,
+                Name = profile.Name,
+                SearchUrl = profile.SearchUrl,
+                RegionCode = profile.RegionCode,
+                LawType = profile.LawType,
+                IsActive = profile.IsActive,
+                PollIntervalMinutes = profile.PollIntervalMinutes,
+                CreatedAt = profile.CreatedAt,
+                UpdatedAt = profile.UpdatedAt
+            };
+        }
+        else
+        {
+            Profile.IsActive = true;
+            Profile.PollIntervalMinutes = 1440; // раз в сутки по умолчанию
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        // 🔹 валидация ссылки
+        if (!Profile.SearchUrl.Contains("results.html", StringComparison.OrdinalIgnoreCase) ||
+            !Profile.SearchUrl.Contains("publishDateFrom", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("[ERROR] некорректная ссылка: должна содержать results.html и publishDateFrom");
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            Profile.UpdatedAt = DateTime.UtcNow;
+            if (!IsEdit)
+            {
+                Profile.CreatedAt = DateTime.UtcNow;
+                Db.MonitorProfiles.Add(Profile);
+            }
+            else
+            {
+                Db.MonitorProfiles.Update(Profile);
+            }
+            await Db.SaveChangesAsync();
+            Navigation.NavigateTo("/monitor/dashboard");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] SaveProfile: {ex.Message}");
+        }
+        finally { isSaving = false; }
+    }
+
+    private void CancelAsync() => Navigation.NavigateTo("/monitor/dashboard");
+}
+
+
+### File: Components\Pages\Monitor\ProfileTenders.razor ###
+
+@page "/monitor/profiles/{ProfileId:int}/tenders"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using System.Linq
+@using QwenWeb.Data
+@using QwenWeb.Models
+
+@inject TenderMonitorDbContext Db
+@inject NavigationManager Navigation
+
+<h3>🔍 Закупки профиля: @profileName</h3>
+
+<!-- Фильтры и пагинация -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <input type="text" class="form-control form-control-sm"
+                       placeholder="Поиск по названию..."
+                       @bind="searchQuery"
+                       @bind:event="oninput" />
+            </div>
+            <div class="col-md-2">
+                <select class="form-select form-select-sm" @bind="pageSize">
+                    <option value="10">10 на стр.</option>
+                    <option value="25">25 на стр.</option>
+                    <option value="50">50 на стр.</option>
+                    <option value="100">100 на стр.</option>
+                </select>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <small class="text-muted">
+                    Найдено: @totalCount | Страница @currentPage из @totalPages
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">Загрузка закупок...</p>
+    </div>
+}
+else if (items.Count == 0)
+{
+    <div class="alert alert-info">
+        @(string.IsNullOrEmpty(searchQuery)
+            ? "По этому профилю пока нет сохранённых закупок."
+            : "Ничего не найдено по вашему запросу.")
+    </div>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var item in items)
+        {
+            <QwenWeb.Components.TenderCard Item="item" />
+        }
+    </div>
+
+    <!-- Пагинация -->
+    @if (totalPages > 1)
+    {
+        <nav class="mt-3" aria-label="Пагинация">
+            <ul class="pagination pagination-sm justify-content-center">
+                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => GoToPage(currentPage - 1)" disabled="@(currentPage == 1)">← Назад</button>
+                </li>
+                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                    </li>
+                }
+                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="() => GoToPage(currentPage + 1)" disabled="@(currentPage == totalPages)">Вперёд →</button>
+                </li>
+            </ul>
+        </nav>
+    }
+}
+
+<!-- Кнопка назад -->
+<div class="mt-4">
+    <a href="/monitor/dashboard" class="btn btn-outline-secondary btn-sm">← Назад к профилям</a>
+</div>
+
+@code {
+    [Parameter] public int ProfileId { get; set; }
+
+    private string profileName = "Загрузка...";
+    private List<TenderDisplayItem> items = new();
+    private bool isLoading = true;
+
+    // Пагинация и поиск
+    private string searchQuery = string.Empty;
+    private int pageSize = 25;
+    private int currentPage = 1;
+    private int totalCount = 0;
+    private int totalPages => totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfileNameAsync();
+        await LoadTendersAsync();
+    }
+
+    private async Task LoadProfileNameAsync()
+    {
+        var profile = await Db.MonitorProfiles.FindAsync(ProfileId);
+        profileName = profile?.Name ?? $"Профиль #{ProfileId}";
+    }
+
+    private async Task LoadTendersAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var query = Db.Tenders
+                .Where(t => t.ProfileId == ProfileId)
+                .AsQueryable();
+
+            // Поиск по названию/описанию
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                var q = searchQuery.ToLower();
+                query = query.Where(t =>
+                    (t.Title != null && t.Title.ToLower().Contains(q)) ||
+                    (t.Description != null && t.Description.ToLower().Contains(q)));
+            }
+
+            totalCount = await query.CountAsync();
+
+            if (currentPage > totalPages) currentPage = Math.Max(1, totalPages);
+
+            var records = await query
+                .OrderByDescending(t => t.PubDate)
+                .ThenByDescending(t => t.CreatedAtUtc)
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            items = records.Select(r => new TenderDisplayItem
+            {
+                Record = r,
+                ParsedInfo = r.Description != null
+                    ? QwenWeb.Services.Parsing.TenderInfoParser.Parse(r.Description)
+                    : null
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] LoadTendersAsync: {ex.Message}");
+            items = new();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        _ = LoadTendersAsync();
+    }
+
+    // 🔹 убран OnParametersSetAsync — чтобы не было перезагрузок при вводе поиска
+    // поиск работает через @bind:event="oninput" + StateHasChanged в LoadTendersAsync
+}
+
+
 ### File: Configuration\MonitorSettings.cs ###
 
 using System;
@@ -2512,7 +3011,6 @@ public class MonitorSettings
 
 using Microsoft.EntityFrameworkCore;
 using QwenWeb.Models;
-using System.Reflection.Emit;
 
 namespace QwenWeb.Data;
 
@@ -2521,18 +3019,37 @@ public class TenderMonitorDbContext : DbContext
     public TenderMonitorDbContext(DbContextOptions<TenderMonitorDbContext> options) : base(options) { }
 
     public DbSet<TenderMonitorRecord> Tenders { get; set; } = null!;
+    public DbSet<MonitorProfile> MonitorProfiles { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // 🔹 первичный ключ на Id, а не на Link
         modelBuilder.Entity<TenderMonitorRecord>()
-            .HasKey(t => t.Link);
+            .HasKey(t => t.Id);
 
         modelBuilder.Entity<TenderMonitorRecord>()
             .Property(t => t.CreatedAtUtc)
             .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<MonitorProfile>()
+            .Property(p => p.CreatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+        modelBuilder.Entity<MonitorProfile>()
+            .Property(p => p.UpdatedAt)
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        modelBuilder.Entity<TenderMonitorRecord>()
+            .HasOne<MonitorProfile>()
+            .WithMany()
+            .HasForeignKey(t => t.ProfileId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // 🔹 составной уникальный индекс: одна закупка в одном профиле
+        modelBuilder.Entity<TenderMonitorRecord>()
+            .HasIndex(t => new { t.RegNumber, t.ProfileId })
+            .IsUnique();
     }
 }
-
 
 
 ### File: Models\EisDocumentItem.cs ###
@@ -2570,6 +3087,45 @@ public class EisDocumentItem
     public bool CanRetry => RetryCount < 3 && (LastRetryAt == null || DateTime.UtcNow - LastRetryAt > TimeSpan.FromSeconds(10));
 
 
+}
+
+
+### File: Models\MonitorProfile.cs ###
+
+using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace QwenWeb.Models;
+
+public class MonitorProfile
+{
+    [Key]
+    public int Id { get; set; }
+
+    [Required, MaxLength(150)]
+    public string Name { get; set; } = string.Empty;
+
+    public bool IsActive { get; set; } = true;
+
+    // 🔹 новое поле: ссылка-шаблон из веб-интерфейса еис
+    // именно по ней будет работать браузерный скрапер
+    [Required, MaxLength(2000)]
+    public string SearchUrl { get; set; } = string.Empty;
+
+    // 🔹 старые поля — теперь опциональны
+    // нужны для отображения в интерфейсе и обратной совместимости
+    // новые профили могут не заполнять их (вся логика в SearchUrl)
+    public string? RegionCode { get; set; }
+    public string? LawType { get; set; }
+
+    public int PollIntervalMinutes { get; set; } = 1440; // по умолчанию раз в сутки
+
+    public DateTime? LastRunAt { get; set; }
+    public int LastFoundCount { get; set; }
+    public string? LastError { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 
 
@@ -2633,21 +3189,53 @@ public class TenderDisplayItem
 
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace QwenWeb.Models;
 
+[Table("Tenders")]
+[Index(nameof(RegNumber), nameof(ProfileId), IsUnique = true)]  // 🔹 составной уникальный индекс
 public class TenderMonitorRecord
 {
+    // 🔹 автоинкрементный первичный ключ
     [Key]
+    public int Id { get; set; }
+
+    // 🔹 уникальный номер закупки — часть составного ключа
+    [Required, MaxLength(50)]
+    public string RegNumber { get; set; } = string.Empty;
+
+    // 🔹 детальная ссылка (универсальный шаблон) — без UNIQUE
+    [Required, MaxLength(500)]
     public string Link { get; set; } = string.Empty;
 
+    [Required, MaxLength(500)]
     public string Title { get; set; } = string.Empty;
 
     public string? Description { get; set; }
-
     public DateTime? PubDate { get; set; }
 
+    // 🔹 поля для обогащённых данных
+    public decimal? InitialPrice { get; set; }
+    public string? CustomerName { get; set; }
+
+    // 🔹 статус обработки
+    [MaxLength(20)]
+    public string Status { get; set; } = "raw";
+
+    public string? LastError { get; set; }
+
+    // 🔹 привязка к профилю — часть составного ключа
+    public int? ProfileId { get; set; }
+
+    // 🔹 метаданные
+    public string? RegionCode { get; set; }
+    public string? LawType { get; set; }
+    public string? SearchKeywords { get; set; }
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }
 
 
@@ -3000,6 +3588,9 @@ public class EisDocumentService : IDisposable
         TimeSpan.FromSeconds(5),
         TimeSpan.FromSeconds(10)
     };
+
+    // 🔹 Публичный доступ к HttpClient для переиспользования сессии
+    public HttpClient HttpClient => _httpClient;
 
     public EisDocumentService(ILogger<EisDocumentService> logger)
     {
@@ -3593,6 +4184,7 @@ public class EisDocumentService : IDisposable
         }
     }
 
+
     private static string GetSafeFileName(string fileName)
     {
         foreach (char invalidChar in Path.GetInvalidFileNameChars())
@@ -3821,6 +4413,567 @@ public class EisDocumentService : IDisposable
     {
         _httpClient?.Dispose();
         _handler?.Dispose();
+    }
+}
+
+
+### File: Services\Monitoring\BrowserScraperTest.cs ###
+
+using Microsoft.Playwright;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+
+namespace QwenWeb.Services.Monitoring;
+
+public static class BrowserScraperTest
+{
+    public static async Task RunAsync()
+    {
+        Console.WriteLine("🌐 запуск тестового браузера (chromium)...");
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new()
+        {
+            Headless = true,
+            Args = new[] { "--disable-blink-features=AutomationControlled" }
+        });
+
+        var context = await browser.NewContextAsync(new()
+        {
+            UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            ViewportSize = new() { Width = 1280, Height = 900 }
+        });
+
+        var page = await context.NewPageAsync();
+        var regNumbers = new HashSet<string>();
+        int pageLimit = 5;
+        int currentPage = 1;
+
+        try
+        {
+            while (currentPage <= pageLimit)
+            {
+                var today = DateTime.Today.ToString("dd.MM.yyyy");
+                var url = $"https://zakupki.gov.ru/epz/order/extendedsearch/results.html?" +
+                          $"morphology=on&" +
+                          $"search-filter=%D0%94%D0%B0%D1%82%D0%B5+%D1%80%D0%B0%D0%B7%D0%BC%D0%B5%D1%89%D0%B5%D0%BD%D0%B8%D1%8F&" +
+                          $"pageNumber={currentPage}&" +
+                          $"sortDirection=false&" +
+                          $"recordsPerPage=50&" +
+                          $"showLotsInfoHidden=false&" +
+                          $"sortBy=UPDATE_DATE&" +
+                          $"fz44=on&" +
+                          $"af=on&" +
+                          $"currencyIdGeneral=-1&" +
+                          $"publishDateFrom={today}&" +
+                          $"selectedSubjects=38000000000";
+
+                Console.WriteLine($"\n📄 загрузка страницы {currentPage}...");
+                await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+
+                try
+                {
+                    await page.WaitForSelectorAsync("a[href*='regNumber=']", new() { Timeout = 15000 });
+                }
+                catch (TimeoutException)
+                {
+                    Console.WriteLine("⚠️ элементы с номерами закупок не найдены. возможна captcha или пустая выдача.");
+                    break;
+                }
+
+                var links = await page.QuerySelectorAllAsync("a[href*='regNumber=']");
+                foreach (var link in links)
+                {
+                    var href = await link.GetAttributeAsync("href");
+                    if (string.IsNullOrEmpty(href)) continue;
+
+                    var match = Regex.Match(href, @"regNumber=([0-9A-Za-z\-_]+)");
+                    if (match.Success)
+                    {
+                        regNumbers.Add(match.Groups[1].Value);
+                    }
+                }
+
+                Console.WriteLine($"✅ найдено ссылок на стр.: {links.Count()} | всего уникальных regnumber: {regNumbers.Count}");
+
+                var hasNext = await page.QuerySelectorAsync("a.next-page, .pagination__next, [class*='next']") != null;
+                if (!hasNext)
+                {
+                    Console.WriteLine("🏁 кнопка «далее» отсутствует. это последняя страница.");
+                    break;
+                }
+
+                currentPage++;
+                await Task.Delay(2500);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ ошибка во время парсинга: {ex.Message}");
+        }
+        finally
+        {
+            await browser.CloseAsync();
+        }
+
+        var fileName = $"irkutsk_44fz_{DateTime.Today:yyyy-MM-dd}_regnumbers.txt";
+        await File.WriteAllLinesAsync(fileName, regNumbers.OrderBy(x => x));
+        Console.WriteLine($"\n🎉 готово. сохранено {regNumbers.Count} уникальных номеров в файл: {fileName}");
+    }
+}
+
+
+### File: Services\Monitoring\MonitorProfileManager.cs ###
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Playwright;
+using QwenWeb.Data;
+using QwenWeb.Models;
+using QwenWeb.Services.Documents;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+
+namespace QwenWeb.Services.Monitoring;
+
+public class MonitorProfileManager : IDisposable
+{
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly ILogger<MonitorProfileManager> _logger;
+    private readonly EisDocumentService _eisService;
+    private readonly Random _random = new();
+    private CancellationTokenSource? _cts;
+    private Task? _backgroundTask;
+
+    private readonly Dictionary<int, ProfileStats> _stats = new();
+    private readonly object _statsLock = new();
+
+    public record ProfileStats(
+        bool IsActive,
+        DateTime? LastRunAt,
+        int LastFoundCount,
+        string? LastError
+    );
+
+    public MonitorProfileManager(
+        IServiceScopeFactory scopeFactory,
+        ILogger<MonitorProfileManager> logger,
+        EisDocumentService eisService)
+    {
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+        _eisService = eisService;
+    }
+
+    public void Start()
+    {
+        if (_cts != null && !_cts.IsCancellationRequested) return;
+        _cts = new CancellationTokenSource();
+        _backgroundTask = RunAsync(_cts.Token);
+        _logger.LogInformation("🔄 MonitorProfileManager запущен");
+    }
+
+    public async Task StopAsync()
+    {
+        if (_cts == null) return;
+        _cts.Cancel();
+        try { await (_backgroundTask ?? Task.CompletedTask); }
+        catch (OperationCanceledException) { }
+        _cts.Dispose();
+        _cts = null;
+        _backgroundTask = null;
+        UpdateAllStats(isActive: false);
+        _logger.LogInformation("🛑 MonitorProfileManager остановлен");
+    }
+
+    public IReadOnlyDictionary<int, ProfileStats> GetStats()
+    {
+        lock (_statsLock)
+            return _stats.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
+
+    public async Task ToggleProfileAsync(int profileId, bool activate, CancellationToken ct = default)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
+
+        var profile = await db.MonitorProfiles.FindAsync(new object[] { profileId }, ct);
+        if (profile == null) throw new InvalidOperationException($"Профиль {profileId} не найден");
+
+        profile.IsActive = activate;
+        profile.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        _logger.LogInformation("🔄 Профиль {Id} {Status}", profileId, activate ? "активирован" : "деактивирован");
+    }
+
+    public async Task DeleteProfileAsync(int profileId, CancellationToken ct = default)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
+
+        var profile = await db.MonitorProfiles.FindAsync(new object[] { profileId }, ct);
+        if (profile == null) throw new InvalidOperationException($"Профиль {profileId} не найден");
+
+        db.MonitorProfiles.Remove(profile);
+        await db.SaveChangesAsync(ct);
+
+        lock (_statsLock) _stats.Remove(profileId);
+        _logger.LogInformation("🗑 Профиль {Id} удалён из БД", profileId);
+    }
+
+    private async Task RunAsync(CancellationToken token)
+    {
+        while (!token.IsCancellationRequested)
+        {
+            List<MonitorProfile> activeProfiles;
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
+
+                // 🔹 лог: загрузка профилей
+                _logger.LogDebug("🔄 загрузка активных профилей из бд...");
+                activeProfiles = await db.MonitorProfiles
+                    .Where(p => p.IsActive)
+                    .OrderBy(p => p.Id)
+                    .ToListAsync(token);
+
+                _logger.LogInformation("📊 загружено {Count} активных профилей", activeProfiles.Count);
+                foreach (var p in activeProfiles)
+                {
+                    _logger.LogDebug("  - профиль #{Id} («{Name}»), SearchUrl длина={Len}",
+                        p.Id, p.Name, p.SearchUrl?.Length ?? 0);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Ошибка загрузки профилей");
+                await Task.Delay(TimeSpan.FromSeconds(30), token);
+                continue;
+            }
+
+            if (activeProfiles.Count == 0)
+            {
+                UpdateAllStats(isActive: true);
+                await Task.Delay(TimeSpan.FromSeconds(10), token);
+                continue;
+            }
+
+            foreach (var profile in activeProfiles)
+            {
+                if (token.IsCancellationRequested) break;
+
+                try
+                {
+                    await PollProfileAsync(profile, token);
+                }
+                catch (OperationCanceledException) { break; }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "💥 Ошибка опроса профиля {ProfileId} ({Name})", profile.Id, profile.Name);
+                    UpdateStat(profile.Id, error: ex.Message);
+                }
+
+                var delay = TimeSpan.FromSeconds(_random.Next(3, 6));
+                try { await Task.Delay(delay, token); }
+                catch (OperationCanceledException) { break; }
+            }
+        }
+    }
+
+    private async Task PollProfileAsync(MonitorProfile profile, CancellationToken token)
+    {
+        // 🔹 лог: детали профиля перед маршрутизацией
+        _logger.LogDebug("📋 профиль #{Id} («{Name}»): SearchUrl длина={Len}, RegionCode={Region}, LawType={Law}, IsActive={Active}",
+            profile.Id, profile.Name,
+            profile.SearchUrl?.Length ?? 0,
+            profile.RegionCode ?? "null",
+            profile.LawType ?? "null",
+            profile.IsActive);
+
+        // 🔹 новый поток: если задан SearchUrl — используем браузерный скрапер
+        if (!string.IsNullOrWhiteSpace(profile.SearchUrl))
+        {
+            _logger.LogInformation("🌐 [{Name}] → браузерный скрапер", profile.Name);
+            await PollProfileWithBrowserAsync(profile, token);
+            return;
+        }
+
+        // 🔹 старый поток (для обратной совместимости): только если заполнены RegionCode и LawType
+        if (string.IsNullOrWhiteSpace(profile.RegionCode) || string.IsNullOrWhiteSpace(profile.LawType))
+        {
+            _logger.LogWarning("⚠️ [{Name}] → пропущен (не настроен: нет SearchUrl и нет RegionCode/LawType)", profile.Name);
+            UpdateStat(profile.Id, error: "не настроен: нет SearchUrl или RegionCode/LawType");
+            return;
+        }
+
+        // старый rss-поток
+        _logger.LogInformation("📡 [{Name}] → rss-поток", profile.Name);
+        await PollProfileWithRssAsync(profile, token);
+    }
+
+    private async Task PollProfileWithBrowserAsync(MonitorProfile profile, CancellationToken token)
+    {
+        _logger.LogInformation("🌐 [{ProfileName}] запуск браузерного скрапера", profile.Name);
+
+        try
+        {
+            var today = DateTime.Today.ToString("dd.MM.yyyy");
+            var searchUrl = ReplaceDateInUrl(profile.SearchUrl, today);
+            _logger.LogDebug("🔗 [{ProfileName}] обновлённая ссылка: {Url}", profile.Name, searchUrl);
+
+            var regNumbers = await ScrapeRegNumbersAsync(profile, token);
+            _logger.LogInformation("✅ [{ProfileName}] найдено regNumber: {Count}", profile.Name, regNumbers.Count);
+
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
+
+            int newCount = 0;
+            foreach (var regNumber in regNumbers)
+            {
+                var exists = await db.Tenders.AnyAsync(t => t.RegNumber == regNumber && t.ProfileId == profile.Id, token);
+                if (exists) continue;
+
+                var detailLink = $"https://zakupki.gov.ru/epz/order/notice/view/common-info.html?regNumber={regNumber}";
+
+                var record = new TenderMonitorRecord
+                {
+                    RegNumber = regNumber,
+                    Link = detailLink,
+                    Title = $"Закупка #{regNumber}",
+                    ProfileId = profile.Id,
+                    RegionCode = profile.RegionCode,
+                    LawType = profile.LawType,
+                    Status = "raw",
+                    CreatedAtUtc = DateTime.UtcNow
+                };
+
+                db.Tenders.Add(record);
+                newCount++;
+            }
+
+            if (newCount > 0)
+            {
+                await db.SaveChangesAsync(token);
+                _logger.LogInformation("🎉 [{ProfileName}] сохранено {Count} новых записей", profile.Name, newCount);
+            }
+            else
+            {
+                _logger.LogInformation("ℹ️ [{ProfileName}] новых записей не найдено (все дубли или пусто)", profile.Name);
+            }
+
+            UpdateStat(profile.Id, lastRunAt: DateTime.UtcNow, foundCount: newCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "💥 [{ProfileName}] ошибка в браузерном скрапере", profile.Name);
+            UpdateStat(profile.Id, error: ex.Message);
+        }
+    }
+
+    private static string ReplaceDateInUrl(string url, string newDate)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return url;
+
+        var regexFrom = new Regex(@"publishDateFrom=\d{2}\.\d{2}\.\d{4}", RegexOptions.IgnoreCase);
+        url = regexFrom.Replace(url, $"publishDateFrom={newDate}");
+
+        var regexTo = new Regex(@"publishDateTo=\d{2}\.\d{2}\.\d{4}", RegexOptions.IgnoreCase);
+        url = regexTo.Replace(url, $"publishDateTo={newDate}");
+
+        return url;
+    }
+
+    private async Task<HashSet<string>> ScrapeRegNumbersAsync(MonitorProfile profile, CancellationToken token)
+    {
+        var regNumbers = new HashSet<string>();
+        int maxPages = 3;
+        int currentPage = 1;
+
+        var today = DateTime.Today.ToString("dd.MM.yyyy");
+        var baseUrl = ReplaceDateInUrl(profile.SearchUrl, today);
+
+        // 🔹 лог: исходная ссылка перед скрапингом
+        var preview = baseUrl.Length > 300 ? baseUrl.Substring(0, 300) + "..." : baseUrl;
+        _logger.LogInformation("🔍 [{Name}] исходная ссылка (длина {Len}): {Preview}",
+            profile.Name, baseUrl.Length, preview);
+        _logger.LogDebug("🔍 [{Name}] полная ссылка: {Url}", profile.Name, baseUrl);
+
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new()
+        {
+            Headless = false,
+            Args = new[] {
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-accelerated-2d-canvas",
+                "--disable-gpu"
+            }
+        });
+
+        var context = await browser.NewContextAsync(new()
+        {
+            UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            ViewportSize = new() { Width = 1280, Height = 900 },
+            ExtraHTTPHeaders = new Dictionary<string, string>
+            {
+                { "accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8" },
+                { "accept-language", "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7" },
+                { "sec-ch-ua", "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"" },
+                { "sec-ch-ua-mobile", "?0" },
+                { "sec-ch-ua-platform", "\"Windows\"" }
+            }
+        });
+
+        var page = await context.NewPageAsync();
+
+        try
+        {
+            while (currentPage <= maxPages && !token.IsCancellationRequested)
+            {
+                var pageUrl = baseUrl.Contains("pageNumber=")
+                    ? Regex.Replace(baseUrl, @"pageNumber=\d+", $"pageNumber={currentPage}")
+                    : $"{baseUrl}&pageNumber={currentPage}";
+
+                _logger.LogDebug("📄 [{Name}] страница {Page}: {Url}", profile.Name, currentPage, pageUrl);
+                _logger.LogInformation("🔗 [{Name}] страница {Page}: {Url}", profile.Name, currentPage, pageUrl);
+
+                await page.GotoAsync(pageUrl, new()
+                {
+                    WaitUntil = WaitUntilState.NetworkIdle,
+                    Timeout = 60000
+                });
+
+                try
+                {
+                    await page.WaitForSelectorAsync("a[href*='regNumber=']", new() { Timeout = 10000 });
+                }
+                catch (TimeoutException)
+                {
+                    _logger.LogWarning("⏳ [{Name}] элементы не найдены на странице {Page}. возможна капча или конец выдачи.", profile.Name, currentPage);
+                    break;
+                }
+
+                var links = await page.QuerySelectorAllAsync("a[href*='regNumber=']");
+                foreach (var link in links)
+                {
+                    var href = await link.GetAttributeAsync("href");
+                    if (string.IsNullOrEmpty(href)) continue;
+
+                    var match = Regex.Match(href, @"regNumber=([0-9A-Za-z\-_]+)");
+                    if (match.Success) regNumbers.Add(match.Groups[1].Value);
+                }
+
+                _logger.LogDebug("✅ [{Name}] собрано regnumber на стр. {Page}: {Count}", profile.Name, currentPage, links.Count());
+
+                var hasNext = await page.QuerySelectorAsync("a.next-page, .pagination__next, [class*='next']") != null;
+                if (!hasNext)
+                {
+                    _logger.LogDebug("🏁 [{Name}] кнопка 'далее' не найдена. завершаем сбор.", profile.Name);
+                    break;
+                }
+
+                currentPage++;
+                await Task.Delay(2000, token);
+            }
+        }
+        finally
+        {
+            await browser.CloseAsync();
+        }
+
+        return regNumbers;
+    }
+
+    private async Task PollProfileWithRssAsync(MonitorProfile profile, CancellationToken token)
+    {
+        var today = DateTime.Today.ToString("yyyy-MM-dd");
+        var url = $"https://zakupki.gov.ru/epz/order/extendedsearch/rss.html?" +
+                  $"lawTypes={Uri.EscapeDataString(profile.LawType ?? string.Empty)}&" +
+                  $"regions={Uri.EscapeDataString(profile.RegionCode ?? string.Empty)}&" +
+                  $"publishDateFrom={today}&" +
+                  $"publishDateTo={today}&" +
+                  $"sortBy=PUBLISH_DATE&" +
+                  $"sortOrder=DESC&" +
+                  $"page=1";
+
+        _logger.LogInformation("📡 [{ProfileName}] rss-запрос: {Url}", profile.Name, url);
+
+        var client = _eisService.HttpClient;
+        var response = await client.GetAsync(url, token);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("⚠️ [{ProfileName}] rss ошибка: статус {StatusCode}", profile.Name, response.StatusCode);
+            UpdateStat(profile.Id, error: $"http {response.StatusCode}");
+            return;
+        }
+
+        var xml = await response.Content.ReadAsStringAsync(token);
+        var doc = XDocument.Parse(xml);
+        var items = doc.Descendants("item").ToList();
+
+        _logger.LogDebug("🔍 [{ProfileName}] rss вернул {Count} элементов", profile.Name, items.Count);
+
+        UpdateStat(profile.Id, lastRunAt: DateTime.UtcNow, foundCount: items.Count);
+    }
+
+    private static string[] GetRegionNames(string regionCode) => regionCode switch
+    {
+        "38000000000" => new[] { "Иркутская область", "Иркутской области", "Иркутская обл.", "г. Иркутск" },
+        "24000000000" => new[] { "Красноярский край", "Красноярского края", "г. Красноярск" },
+        "54000000000" => new[] { "Новосибирская область", "Новосибирской области", "г. Новосибирск" },
+        "27000000000" => new[] { "Хабаровский край", "Хабаровского края", "г. Хабаровск" },
+        "28000000000" => new[] { "Амурская область", "Амурской области", "г. Благовещенск" },
+        "75000000000" => new[] { "Забайкальский край", "Забайкальского края", "г. Чита" },
+        "79000000000" => new[] { "Еврейская автономная область", "ЕАО", "г. Биробиджан" },
+        "87000000000" => new[] { "Чукотский автономный округ", "Чукотка", "г. Анадырь" },
+        "41000000000" => new[] { "Камчатский край", "Камчатки", "г. Петропавловск-Камчатский" },
+        "65000000000" => new[] { "Сахалинская область", "Сахалина", "г. Южно-Сахалинск" },
+        "03000000000" => new[] { "Республика Бурятия", "Бурятия", "г. Улан-Удэ" },
+        "25000000000" => new[] { "Приморский край", "Приморья", "г. Владивосток" },
+        _ => new[] { regionCode }
+    };
+
+    private void UpdateStat(int profileId, DateTime? lastRunAt = null, int? foundCount = null, string? error = null)
+    {
+        lock (_statsLock)
+        {
+            if (!_stats.TryGetValue(profileId, out var stats))
+                stats = new ProfileStats(true, null, 0, null);
+
+            _stats[profileId] = stats with
+            {
+                LastRunAt = lastRunAt ?? stats.LastRunAt,
+                LastFoundCount = foundCount ?? stats.LastFoundCount,
+                LastError = error ?? stats.LastError
+            };
+        }
+    }
+
+    private void UpdateAllStats(bool isActive)
+    {
+        lock (_statsLock)
+        {
+            var keys = _stats.Keys.ToList();
+            foreach (var k in keys)
+                _stats[k] = _stats[k] with { IsActive = isActive };
+        }
+    }
+
+    public void Dispose()
+    {
+        try { StopAsync().Wait(1000); } catch { }
     }
 }
 

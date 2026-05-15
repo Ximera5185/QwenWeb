@@ -1,0 +1,148 @@
+﻿@page "/monitor/profiles/create"
+@page "/monitor/profiles/edit/{ProfileId:int}"
+@rendermode InteractiveServer
+@using QwenWeb.Data
+@using QwenWeb.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject TenderMonitorDbContext Db
+@inject NavigationManager Navigation
+
+<h3>@(IsEdit ? "✏️ Редактирование профиля" : "➕ Новый профиль мониторинга")</h3>
+
+<div class="alert alert-info">
+    <strong>как настроить:</strong>
+    <ol class="mb-0 mt-1">
+        <li>откройте <a href="https://zakupki.gov.ru" target="_blank">zakupki.gov.ru</a></li>
+        <li>настройте фильтры: регион, закон, статус, дата</li>
+        <li>скопируйте ссылку из адресной строки браузера</li>
+        <li>вставьте её в поле ниже</li>
+    </ol>
+</div>
+
+<EditForm Model="Profile" OnValidSubmit="HandleSubmitAsync" class="mt-4">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="alert alert-danger" />
+
+    <div class="row g-3">
+        <!-- Название профиля -->
+        <div class="col-12">
+            <label class="form-label">Название профиля</label>
+            <InputText @bind-Value="Profile.Name" class="form-control" placeholder="Например: Иркутская область, 44-ФЗ, подача заявок" />
+            <ValidationMessage For="@(() => Profile.Name)" class="text-danger small" />
+        </div>
+
+        <!-- Ссылка поиска ЕИС -->
+        <div class="col-12">
+            <label class="form-label">Ссылка поиска из ЕИС</label>
+            <InputText @bind-Value="Profile.SearchUrl" class="form-control" placeholder="https://zakupki.gov.ru/epz/order/extendedsearch/results.html?..." />
+            <ValidationMessage For="@(() => Profile.SearchUrl)" class="text-danger small" />
+            <div class="form-text">
+                ссылка должна содержать <code>results.html</code> и параметр <code>publishDateFrom</code>.
+                дата будет автоматически заменяться на текущую при каждом запуске.
+            </div>
+        </div>
+
+        <!-- Интервал опроса (опционально) -->
+        <div class="col-md-3">
+            <label class="form-label">Интервал (мин)</label>
+            <InputNumber @bind-Value="Profile.PollIntervalMinutes" class="form-control" min="60" max="1440" />
+            <ValidationMessage For="@(() => Profile.PollIntervalMinutes)" class="text-danger small" />
+        </div>
+
+        <!-- Активность -->
+        <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check">
+                <InputCheckbox @bind-Value="Profile.IsActive" class="form-check-input" />
+                <label class="form-check-label">Активен</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary" disabled="@isSaving">
+            @if (isSaving)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            @(IsEdit ? "Сохранить изменения" : "Создать профиль")
+        </button>
+        <button type="button" class="btn btn-outline-secondary" @onclick="CancelAsync">Отмена</button>
+    </div>
+</EditForm>
+
+@code {
+    [SupplyParameterFromQuery]
+    [Parameter]
+    public int? ProfileId { get; set; }
+
+    public bool IsEdit => ProfileId.HasValue;
+
+    private MonitorProfile Profile = new();
+    private bool isSaving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit && ProfileId.HasValue)
+        {
+            var profile = await Db.MonitorProfiles.FindAsync(ProfileId.Value);
+            if (profile == null)
+            {
+                Navigation.NavigateTo("/monitor/dashboard", replace: true);
+                return;
+            }
+            Profile = new MonitorProfile
+            {
+                Id = profile.Id,
+                Name = profile.Name,
+                SearchUrl = profile.SearchUrl,
+                RegionCode = profile.RegionCode,
+                LawType = profile.LawType,
+                IsActive = profile.IsActive,
+                PollIntervalMinutes = profile.PollIntervalMinutes,
+                CreatedAt = profile.CreatedAt,
+                UpdatedAt = profile.UpdatedAt
+            };
+        }
+        else
+        {
+            Profile.IsActive = true;
+            Profile.PollIntervalMinutes = 1440; // раз в сутки по умолчанию
+        }
+    }
+
+    private async Task HandleSubmitAsync()
+    {
+        // 🔹 валидация ссылки
+        if (!Profile.SearchUrl.Contains("results.html", StringComparison.OrdinalIgnoreCase) ||
+            !Profile.SearchUrl.Contains("publishDateFrom", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine("[ERROR] некорректная ссылка: должна содержать results.html и publishDateFrom");
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            Profile.UpdatedAt = DateTime.UtcNow;
+            if (!IsEdit)
+            {
+                Profile.CreatedAt = DateTime.UtcNow;
+                Db.MonitorProfiles.Add(Profile);
+            }
+            else
+            {
+                Db.MonitorProfiles.Update(Profile);
+            }
+            await Db.SaveChangesAsync();
+            Navigation.NavigateTo("/monitor/dashboard");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] SaveProfile: {ex.Message}");
+        }
+        finally { isSaving = false; }
+    }
+
+    private void CancelAsync() => Navigation.NavigateTo("/monitor/dashboard");
+}
