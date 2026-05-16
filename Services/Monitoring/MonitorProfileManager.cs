@@ -11,7 +11,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace QwenWeb.Services.Monitoring;
 
@@ -76,7 +75,7 @@ public class MonitorProfileManager : IDisposable
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
 
-        var profile = await db.MonitorProfiles.FindAsync(new object[] { profileId }, ct);
+        var profile = await db.MonitorProfiles.FindAsync(new object [] { profileId }, ct);
         if (profile == null) throw new InvalidOperationException($"Профиль {profileId} не найден");
 
         profile.IsActive = activate;
@@ -91,7 +90,7 @@ public class MonitorProfileManager : IDisposable
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
 
-        var profile = await db.MonitorProfiles.FindAsync(new object[] { profileId }, ct);
+        var profile = await db.MonitorProfiles.FindAsync(new object [] { profileId }, ct);
         if (profile == null) throw new InvalidOperationException($"Профиль {profileId} не найден");
 
         db.MonitorProfiles.Remove(profile);
@@ -111,7 +110,6 @@ public class MonitorProfileManager : IDisposable
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
 
-                // 🔹 лог: загрузка профилей
                 _logger.LogDebug("🔄 загрузка активных профилей из бд...");
                 activeProfiles = await db.MonitorProfiles
                     .Where(p => p.IsActive)
@@ -163,7 +161,22 @@ public class MonitorProfileManager : IDisposable
 
     private async Task PollProfileAsync(MonitorProfile profile, CancellationToken token)
     {
-        // 🔹 лог: детали профиля перед маршрутизацией
+        // 🔹 НОВОЕ: проверка интервала опроса
+        if (profile.LastRunAt.HasValue)
+        {
+            var elapsed = DateTime.UtcNow - profile.LastRunAt.Value;
+            var interval = TimeSpan.FromMinutes(profile.PollIntervalMinutes);
+
+            if (elapsed < interval)
+            {
+                var remaining = interval - elapsed;
+                _logger.LogDebug("⏳ [{Name}] пропущен: до следующего опроса осталось {Remaining}",
+                    profile.Name, remaining.ToString(@"hh\:mm\:ss"));
+                return; // ← не запускаем скрапер, ждём следующего цикла
+            }
+        }
+
+        // 🔹 Исправлено: полная лог-строка с параметрами
         _logger.LogDebug("📋 профиль #{Id} («{Name}»): SearchUrl длина={Len}, RegionCode={Region}, LawType={Law}, IsActive={Active}",
             profile.Id, profile.Name,
             profile.SearchUrl?.Length ?? 0,
@@ -171,7 +184,6 @@ public class MonitorProfileManager : IDisposable
             profile.LawType ?? "null",
             profile.IsActive);
 
-        // 🔹 новый поток: если задан SearchUrl — используем браузерный скрапер
         if (!string.IsNullOrWhiteSpace(profile.SearchUrl))
         {
             _logger.LogInformation("🌐 [{Name}] → браузерный скрапер", profile.Name);
@@ -179,7 +191,6 @@ public class MonitorProfileManager : IDisposable
             return;
         }
 
-        // если нет SearchUrl — профиль не настроен
         _logger.LogWarning("⚠️ [{Name}] пропущен: нет SearchUrl", profile.Name);
         UpdateStat(profile.Id, error: "не настроен: пустой SearchUrl");
     }
@@ -190,11 +201,15 @@ public class MonitorProfileManager : IDisposable
 
         try
         {
-            var today = DateTime.Today.ToString("dd.MM.yyyy");
-            var searchUrl = ReplaceDateInUrl(profile.SearchUrl, today);
+            // 🔹 Определяем целевую дату: если UseCustomDate=true и дата задана — используем её
+            string targetDate = profile.UseCustomDate && profile.CustomDate.HasValue
+                ? profile.CustomDate.Value.ToString("dd.MM.yyyy")
+                : DateTime.Today.ToString("dd.MM.yyyy");
+
+            var searchUrl = ReplaceDateInUrl(profile.SearchUrl, targetDate);
             _logger.LogDebug("🔗 [{ProfileName}] обновлённая ссылка: {Url}", profile.Name, searchUrl);
 
-            var regNumbers = await ScrapeRegNumbersAsync(profile, token);
+            var regNumbers = await ScrapeRegNumbersAsync(profile, searchUrl, token);
             _logger.LogInformation("✅ [{ProfileName}] найдено regNumber: {Count}", profile.Name, regNumbers.Count);
 
             using var scope = _scopeFactory.CreateScope();
@@ -234,38 +249,61 @@ public class MonitorProfileManager : IDisposable
                 _logger.LogInformation("ℹ️ [{ProfileName}] новых записей не найдено (все дубли или пусто)", profile.Name);
             }
 
+            // 🔹 ИСПРАВЛЕНО: сохраняем LastRunAt и LastFoundCount в БД для работы интервала опроса
+            var trackedProfile = await db.MonitorProfiles.FindAsync(new object [] { profile.Id }, token);
+            if (trackedProfile != null)
+            {
+                trackedProfile.LastRunAt = DateTime.UtcNow;
+                trackedProfile.LastFoundCount = newCount;
+                trackedProfile.LastError = null;
+                trackedProfile.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(token);
+                _logger.LogDebug("💾 [{Name}] сохранён LastRunAt={LastRunAt}, LastFoundCount={Count}",
+                    profile.Name, trackedProfile.LastRunAt, newCount);
+            }
+
             UpdateStat(profile.Id, lastRunAt: DateTime.UtcNow, foundCount: newCount);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "💥 [{ProfileName}] ошибка в браузерном скрапере", profile.Name);
             UpdateStat(profile.Id, error: ex.Message);
+
+            // 🔹 Также сохраняем ошибку в БД
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
+            var trackedProfile = await db.MonitorProfiles.FindAsync(new object [] { profile.Id }, token);
+            if (trackedProfile != null)
+            {
+                trackedProfile.LastError = ex.Message;
+                trackedProfile.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(token);
+            }
         }
     }
 
-    private static string ReplaceDateInUrl(string url, string newDate)
+    // 🔹 Исправлено: метод теперь принимает targetDate, а не вычисляет её внутри
+    private static string ReplaceDateInUrl(string url, string targetDate)
     {
         if (string.IsNullOrWhiteSpace(url)) return url;
 
         var regexFrom = new Regex(@"publishDateFrom=\d{2}\.\d{2}\.\d{4}", RegexOptions.IgnoreCase);
-        url = regexFrom.Replace(url, $"publishDateFrom={newDate}");
+        url = regexFrom.Replace(url, $"publishDateFrom={targetDate}");
 
         var regexTo = new Regex(@"publishDateTo=\d{2}\.\d{2}\.\d{4}", RegexOptions.IgnoreCase);
-        url = regexTo.Replace(url, $"publishDateTo={newDate}");
+        url = regexTo.Replace(url, $"publishDateTo={targetDate}");
 
         return url;
     }
 
-    private async Task<HashSet<string>> ScrapeRegNumbersAsync(MonitorProfile profile, CancellationToken token)
+    // 🔹 Исправлено: метод принимает baseUrl как параметр, а не вычисляет его внутри
+    private async Task<HashSet<string>> ScrapeRegNumbersAsync(MonitorProfile profile, string baseUrl, CancellationToken token)
     {
         var regNumbers = new HashSet<string>();
         int maxPages = 3;
         int currentPage = 1;
 
-        var today = DateTime.Today.ToString("dd.MM.yyyy");
-        var baseUrl = ReplaceDateInUrl(profile.SearchUrl, today);
-
-        // 🔹 лог: исходная ссылка перед скрапингом
+        // 🔹 Лог: исходная ссылка перед скрапингом
         var preview = baseUrl.Length > 300 ? baseUrl.Substring(0, 300) + "..." : baseUrl;
         _logger.LogInformation("🔍 [{Name}] исходная ссылка (длина {Len}): {Preview}",
             profile.Name, baseUrl.Length, preview);
@@ -275,7 +313,7 @@ public class MonitorProfileManager : IDisposable
         await using var browser = await playwright.Chromium.LaunchAsync(new()
         {
             Headless = false,
-            Args = new[] {
+            Args = new [] {
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
@@ -334,7 +372,7 @@ public class MonitorProfileManager : IDisposable
                     if (string.IsNullOrEmpty(href)) continue;
 
                     var match = Regex.Match(href, @"regNumber=([0-9A-Za-z\-_]+)");
-                    if (match.Success) regNumbers.Add(match.Groups[1].Value);
+                    if (match.Success) regNumbers.Add(match.Groups [1].Value);
                 }
 
                 _logger.LogDebug("✅ [{Name}] собрано regnumber на стр. {Page}: {Count}", profile.Name, currentPage, links.Count());
@@ -358,21 +396,21 @@ public class MonitorProfileManager : IDisposable
         return regNumbers;
     }
 
-    private static string[] GetRegionNames(string regionCode) => regionCode switch
+    private static string [] GetRegionNames(string regionCode) => regionCode switch
     {
-        "38000000000" => new[] { "Иркутская область", "Иркутской области", "Иркутская обл.", "г. Иркутск" },
-        "24000000000" => new[] { "Красноярский край", "Красноярского края", "г. Красноярск" },
-        "54000000000" => new[] { "Новосибирская область", "Новосибирской области", "г. Новосибирск" },
-        "27000000000" => new[] { "Хабаровский край", "Хабаровского края", "г. Хабаровск" },
-        "28000000000" => new[] { "Амурская область", "Амурской области", "г. Благовещенск" },
-        "75000000000" => new[] { "Забайкальский край", "Забайкальского края", "г. Чита" },
-        "79000000000" => new[] { "Еврейская автономная область", "ЕАО", "г. Биробиджан" },
-        "87000000000" => new[] { "Чукотский автономный округ", "Чукотка", "г. Анадырь" },
-        "41000000000" => new[] { "Камчатский край", "Камчатки", "г. Петропавловск-Камчатский" },
-        "65000000000" => new[] { "Сахалинская область", "Сахалина", "г. Южно-Сахалинск" },
-        "03000000000" => new[] { "Республика Бурятия", "Бурятия", "г. Улан-Удэ" },
-        "25000000000" => new[] { "Приморский край", "Приморья", "г. Владивосток" },
-        _ => new[] { regionCode }
+        "38000000000" => new [] { "Иркутская область", "Иркутской области", "Иркутская обл.", "г. Иркутск" },
+        "24000000000" => new [] { "Красноярский край", "Красноярского края", "г. Красноярск" },
+        "54000000000" => new [] { "Новосибирская область", "Новосибирской области", "г. Новосибирск" },
+        "27000000000" => new [] { "Хабаровский край", "Хабаровского края", "г. Хабаровск" },
+        "28000000000" => new [] { "Амурская область", "Амурской области", "г. Благовещенск" },
+        "75000000000" => new [] { "Забайкальский край", "Забайкальского края", "г. Чита" },
+        "79000000000" => new [] { "Еврейская автономная область", "ЕАО", "г. Биробиджан" },
+        "87000000000" => new [] { "Чукотский автономный округ", "Чукотка", "г. Анадырь" },
+        "41000000000" => new [] { "Камчатский край", "Камчатки", "г. Петропавловск-Камчатский" },
+        "65000000000" => new [] { "Сахалинская область", "Сахалина", "г. Южно-Сахалинск" },
+        "03000000000" => new [] { "Республика Бурятия", "Бурятия", "г. Улан-Удэ" },
+        "25000000000" => new [] { "Приморский край", "Приморья", "г. Владивосток" },
+        _ => new [] { regionCode }
     };
 
     private void UpdateStat(int profileId, DateTime? lastRunAt = null, int? foundCount = null, string? error = null)
@@ -382,7 +420,7 @@ public class MonitorProfileManager : IDisposable
             if (!_stats.TryGetValue(profileId, out var stats))
                 stats = new ProfileStats(true, null, 0, null);
 
-            _stats[profileId] = stats with
+            _stats [profileId] = stats with
             {
                 LastRunAt = lastRunAt ?? stats.LastRunAt,
                 LastFoundCount = foundCount ?? stats.LastFoundCount,
@@ -397,7 +435,7 @@ public class MonitorProfileManager : IDisposable
         {
             var keys = _stats.Keys.ToList();
             foreach (var k in keys)
-                _stats[k] = _stats[k] with { IsActive = isActive };
+                _stats [k] = _stats [k] with { IsActive = isActive };
         }
     }
 

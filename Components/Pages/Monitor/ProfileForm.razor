@@ -4,6 +4,7 @@
 @using QwenWeb.Data
 @using QwenWeb.Models
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
 
 @inject TenderMonitorDbContext Db
 @inject NavigationManager Navigation
@@ -20,7 +21,8 @@
     </ol>
 </div>
 
-<EditForm Model="Profile" OnValidSubmit="HandleSubmitAsync" class="mt-4">
+<!-- 🔹 OnSubmit для ручной валидации -->
+<EditForm Model="Profile" OnSubmit="HandleSubmitAsync" class="mt-4">
     <DataAnnotationsValidator />
     <ValidationSummary class="alert alert-danger" />
 
@@ -35,19 +37,43 @@
         <!-- Ссылка поиска ЕИС -->
         <div class="col-12">
             <label class="form-label">Ссылка поиска из ЕИС</label>
-            <InputText @bind-Value="Profile.SearchUrl" class="form-control" placeholder="https://zakupki.gov.ru/epz/order/extendedsearch/results.html?..." />
-            <ValidationMessage For="@(() => Profile.SearchUrl)" class="text-danger small" />
+            <InputText @bind-Value="Profile.SearchUrl"
+                       class="form-control"
+                       placeholder="https://zakupki.gov.ru/epz/order/extendedsearch/results.html?..." />
+            <ValidationMessage For="@(() => Profile.SearchUrl)"
+                               class="text-danger small d-block mt-1" />
             <div class="form-text">
                 ссылка должна содержать <code>results.html</code> и параметр <code>publishDateFrom</code>.
                 дата будет автоматически заменяться на текущую при каждом запуске.
             </div>
         </div>
 
-        <!-- Интервал опроса (опционально) -->
+        <!-- Интервал опроса -->
         <div class="col-md-3">
             <label class="form-label">Интервал (мин)</label>
             <InputNumber @bind-Value="Profile.PollIntervalMinutes" class="form-control" min="60" max="1440" />
             <ValidationMessage For="@(() => Profile.PollIntervalMinutes)" class="text-danger small" />
+        </div>
+
+        <!-- 🔹 НОВОЕ: Режим подстановки даты -->
+        <div class="col-md-3">
+            <label class="form-label">Режим даты</label>
+            <div class="form-check mt-2">
+                <InputCheckbox @bind-Value="Profile.UseCustomDate"
+                               class="form-check-input"
+                               @onchange="StateHasChanged" />
+                <label class="form-check-label">Своя дата</label>
+            </div>
+        </div>
+
+        <!-- 🔹 НОВОЕ: Пользовательская дата (с надёжным disabled) -->
+        <div class="col-md-3">
+            <label class="form-label">Дата поиска</label>
+            <InputDate @bind-Value="Profile.CustomDate"
+                       class="form-control"
+                       @attributes="GetDateInputAttributes()"
+                       @key="Profile.UseCustomDate" />
+            <ValidationMessage For="@(() => Profile.CustomDate)" class="text-danger small" />
         </div>
 
         <!-- Активность -->
@@ -59,6 +85,7 @@
         </div>
     </div>
 
+    <!-- 🔹 Кнопки — вне row, но внутри EditForm -->
     <div class="mt-4 d-flex gap-2">
         <button type="submit" class="btn btn-primary" disabled="@isSaving">
             @if (isSaving)
@@ -72,6 +99,8 @@
 </EditForm>
 
 @code {
+    [CascadingParameter] private EditContext? CurrentEditContext { get; set; }
+
     [SupplyParameterFromQuery]
     [Parameter]
     public int? ProfileId { get; set; }
@@ -81,43 +110,68 @@
     private MonitorProfile Profile = new();
     private bool isSaving;
 
+    // 🔹 Хелпер: возвращает атрибуты для поля даты
+    private IReadOnlyDictionary<string, object> GetDateInputAttributes()
+    {
+        return new Dictionary<string, object>
+        {
+            { "disabled", !Profile.UseCustomDate }
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         if (IsEdit && ProfileId.HasValue)
         {
-            var profile = await Db.MonitorProfiles.FindAsync(ProfileId.Value);
+            // 🔹 AsNoTracking: загружаем как DTO, чтобы избежать конфликта трекинга
+            var profile = await Db.MonitorProfiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == ProfileId.Value);
+
             if (profile == null)
             {
                 Navigation.NavigateTo("/monitor/dashboard", replace: true);
                 return;
             }
-            Profile = new MonitorProfile
-            {
-                Id = profile.Id,
-                Name = profile.Name,
-                SearchUrl = profile.SearchUrl,
-                RegionCode = profile.RegionCode,
-                LawType = profile.LawType,
-                IsActive = profile.IsActive,
-                PollIntervalMinutes = profile.PollIntervalMinutes,
-                CreatedAt = profile.CreatedAt,
-                UpdatedAt = profile.UpdatedAt
-            };
+            Profile = profile;
         }
         else
         {
-            Profile.IsActive = true;
-            Profile.PollIntervalMinutes = 1440; // раз в сутки по умолчанию
+            Profile = new MonitorProfile
+            {
+                IsActive = true,
+                PollIntervalMinutes = 1440,
+                // 🔹 Явная инициализация новых полей
+                UseCustomDate = false,
+                CustomDate = null
+            };
         }
     }
 
     private async Task HandleSubmitAsync()
     {
-        // 🔹 валидация ссылки
-        if (!Profile.SearchUrl.Contains("results.html", StringComparison.OrdinalIgnoreCase) ||
+        // 🔹 Стандартная валидация DataAnnotations
+        if (CurrentEditContext != null && !CurrentEditContext.Validate())
+        {
+            Console.WriteLine("[ERROR] Стандартная валидация не пройдена");
+            return;
+        }
+
+        // 🔹 Валидация SearchUrl
+        if (string.IsNullOrWhiteSpace(Profile.SearchUrl) ||
+            !Profile.SearchUrl.Contains("results.html", StringComparison.OrdinalIgnoreCase) ||
             !Profile.SearchUrl.Contains("publishDateFrom", StringComparison.OrdinalIgnoreCase))
         {
+            CurrentEditContext?.NotifyFieldChanged(new FieldIdentifier(Profile, nameof(Profile.SearchUrl)));
             Console.WriteLine("[ERROR] некорректная ссылка: должна содержать results.html и publishDateFrom");
+            return;
+        }
+
+        // 🔹 Валидация: если режим ручной даты → дата обязательна
+        if (Profile.UseCustomDate && !Profile.CustomDate.HasValue)
+        {
+            CurrentEditContext?.NotifyFieldChanged(new FieldIdentifier(Profile, nameof(Profile.CustomDate)));
+            Console.WriteLine("[ERROR] включён режим ручной даты, но дата не выбрана");
             return;
         }
 
@@ -128,11 +182,16 @@
             if (!IsEdit)
             {
                 Profile.CreatedAt = DateTime.UtcNow;
-                Db.MonitorProfiles.Add(Profile);
+                await Db.MonitorProfiles.AddAsync(Profile);
             }
             else
             {
-                Db.MonitorProfiles.Update(Profile);
+                // 🔹 Безопасное обновление: избегаем конфликта трекинга EF Core
+                var tracked = await Db.MonitorProfiles.FindAsync(Profile.Id);
+                if (tracked != null)
+                {
+                    Db.Entry(tracked).CurrentValues.SetValues(Profile);
+                }
             }
             await Db.SaveChangesAsync();
             Navigation.NavigateTo("/monitor/dashboard");

@@ -26,6 +26,18 @@ public class MonitorProfile
 
     public int PollIntervalMinutes { get; set; } = 1440; // по умолчанию раз в сутки
 
+    // 🔹 НОВОЕ: режим подстановки даты
+    /// <summary>
+    /// Если true — используется CustomDate, иначе — DateTime.Today
+    /// </summary>
+    public bool UseCustomDate { get; set; } = false;
+
+    /// <summary>
+    /// Пользовательская дата для подстановки в SearchUrl (если UseCustomDate = true)
+    /// </summary>
+    public DateTime? CustomDate { get; set; }
+
+
     public DateTime? LastRunAt { get; set; }
     public int LastFoundCount { get; set; }
     public string? LastError { get; set; }

@@ -558,10 +558,6 @@ builder.Services.AddHttpClient();
 builder.Services.AddDbContext<TenderMonitorDbContext>(options =>
     options.UseSqlite(builder.Configuration["MonitorSettings:DbPath"] ?? "Data Source=monitor_test.db"));
 
-// ❌ Старый сервис — отключён
-// builder.Services.AddSingleton<TenderMonitorBackgroundService>();
-// builder.Services.AddHostedService(sp => sp.GetRequiredService<TenderMonitorBackgroundService>());
-
 // ✅ Razor Components + Interactive Server
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -656,7 +652,7 @@ project_context.txt посдежней версии, в нем будут соб
 • Отмена операций: все async-методы принимают CancellationToken и корректно обрабатывают OperationCanceledException.
 
 🔹 ДОМЕН И МОНЕТИЗАЦИЯ:
-• Фокус: CRM для поставщиков госзакупок (ЕИС, парсинг RSS/HTML, извлечение документов, AI-аналитика рисков/маржинальности, подготовка КП).
+• Фокус: CRM для поставщиков госзакупок (ЕИС, парсинг через браузер хромиум, извлечение документов, AI-аналитика рисков/маржинальности, подготовка КП). Парсинг через RSS себя не опровдал, ветку RSS парчинга не развиваем !!!
 • При каждой новой фиче предлагать 1-2 варианта монетизации (Freemium/Pro/Enterprise, API, уведомления, отчёты, командный доступ), но внедрять только после согласования и оценки ROI.
 set-executionpolicy -scope process -executionpolicy bypass -force
 .\collect.ps1
@@ -928,12 +924,6 @@ collect.ps1 Должен быть создан в корне, в нем скри
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="chat">
                 <span class="bi bi-chat-left-text" aria-hidden="true"></span> Чат с Qwen
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="tenders">
-                <span class="bi bi-rss"></span> Госзакупки
             </NavLink>
         </div>
 
@@ -2203,134 +2193,6 @@ else
 }
 
 
-### File: Components\Pages\Tenders.razor ###
-
-@page "/tenders"
-@rendermode InteractiveServer
-@using System.Net.Http
-@inject HttpClient Http
-
-<h3>📜 Лента госзакупок (RSS)</h3>
-
-@if (IsLoading)
-{
-    <div class="text-center py-4">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-2 text-muted">Загрузка данных...</p>
-    </div>
-}
-else if (!string.IsNullOrEmpty(ErrorMessage))
-{
-    <div class="alert alert-danger">❌ @ErrorMessage</div>
-    <button class="btn btn-outline-secondary btn-sm" @onclick="LoadFeed">🔄 Попробовать снова</button>
-}
-else if (Items?.Any() == true)
-{
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="text-muted">Найдено: @Items.Count записей</span>
-        <button class="btn btn-outline-primary btn-sm" @onclick="LoadFeed">🔄 Обновить</button>
-    </div>
-
-    <div class="list-group">
-        @foreach (var item in Items)
-        {
-            <a href="@item.Link" target="_blank" rel="noopener" class="list-group-item list-group-item-action">
-                <div class="d-flex w-100 justify-content-between">
-                    <h6 class="mb-1">@item.Title</h6>
-                    <small class="text-muted">@item.PubDate?.ToString("dd.MM.yyyy HH:mm")</small>
-                </div>
-                <p class="mb-1 text-secondary description-text">
-                    @((MarkupString)item.Description)
-                </p>
-            </a>
-        }
-    </div>
-}
-else
-{
-    <div class="alert alert-info">📭 Лента пуста или не удалось получить данные.</div>
-}
-
-@code {
-    public List<RssItem> Items { get; set; } = new();
-    public bool IsLoading { get; set; }
-    public string ErrorMessage { get; set; } = string.Empty;
-
-    // 👇 Ссылка на RSS госзакупок
-    private const string RssUrl = "https://zakupki.gov.ru/epz/order/extendedsearch/rss.html";
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadFeed();
-    }
-
-    public async Task LoadFeed()
-    {
-        IsLoading = true;
-        ErrorMessage = string.Empty;
-        Items.Clear();
-        StateHasChanged();
-
-        try
-        {
-            // 1. Создаём запрос с заголовками браузера (обход защиты 403)
-            using var request = new HttpRequestMessage(HttpMethod.Get, RssUrl);
-            request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-            request.Headers.Add("Accept", "application/rss+xml, application/xml, text/xml, */*");
-
-            // 2. Отправляем запрос
-            using var response = await Http.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Сервер вернул ошибку: {(int)response.StatusCode} {(response.ReasonPhrase)}");
-            }
-
-            // 3. Парсим XML
-            var xml = await response.Content.ReadAsStringAsync();
-            var doc = System.Xml.Linq.XDocument.Parse(xml);
-
-            var channel = doc.Root?.Element("channel");
-            if (channel != null)
-            {
-                Items = channel.Elements("item")
-                               .Select(i => new RssItem
-                               {
-                                   Title = i.Element("title")?.Value ?? "Без названия",
-                                   Link = i.Element("link")?.Value ?? "#",
-                                   Description = i.Element("description")?.Value ?? "",
-                                   PubDate = DateTime.TryParse(i.Element("pubDate")?.Value, out var dt) ? dt : null
-                               })
-                               .ToList();
-            }
-        }
-        catch (Exception ex)
-        {
-            ErrorMessage = $"Ошибка: {ex.Message}. Попробуйте позже или проверьте доступность портала.";
-            // Демо-данные на случай блокировки
-            Items = new List<RssItem>
-            {
-                new() { Title = "Демо-закупка #1", Link = "#", Description = "Портал вернул 403. Заголовки добавлены, попробуйте обновить.", PubDate = DateTime.Now },
-                new() { Title = "Демо-закупка #2", Link = "#", Description = "Если ошибка persists, возможно, требуется прокси или токен.", PubDate = DateTime.Now.AddHours(-2) }
-            };
-        }
-        finally
-        {
-            IsLoading = false;
-            StateHasChanged();
-        }
-    }
-
-    public class RssItem
-    {
-        public string Title { get; set; } = "";
-        public string Link { get; set; } = "";
-        public string Description { get; set; } = "";
-        public DateTime? PubDate { get; set; }
-    }
-}
-
-
 ### File: Components\Pages\Weather.razor ###
 
 @page "/weather"
@@ -2995,7 +2857,6 @@ public class MonitorSettings
     private readonly object _lock = new object();
     private int _pollIntervalMinutes = 2; // 👈 Дефолт: 2 минуты (минимум)
 
-    public string RssUrl { get; set; } = string.Empty;
     public int HttpClientTimeoutMinutes { get; set; } = 2;
     public int DatabaseCommandTimeoutSeconds { get; set; } = 30;
     public bool AutoLoadDocuments { get; set; } = false;
@@ -3280,265 +3141,6 @@ public class TenderMonitorRecord
     }
   }
 
-
-
-### File: Services\TenderMonitorBackgroundService.cs ###
-
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using QwenWeb.Data;
-using QwenWeb.Models;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using QwenWeb.Configuration;
-
-namespace QwenWeb.Services;
-
-public class TenderMonitorBackgroundService : BackgroundService
-{
-    // Fields
-    private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<TenderMonitorBackgroundService> _logger;
-    private readonly MonitorSettings _settings = null!;
-    private readonly object _statsLock = new object();
-    private int _totalPollsCount;
-    private int _newTendersFoundLastRun;
-    private DateTime _lastRunTimeUtc = DateTime.MinValue;
-    private bool _isErrorLastRun;
-    private readonly object _delayLock = new object();
-    private CancellationTokenSource? _delayCts;
-
-    // Properties (Thread-safe)
-    public int TotalPollsCount
-    {
-        get { lock (_statsLock) return _totalPollsCount; }
-    }
-
-    public int NewTendersFoundLastRun
-    {
-        get { lock (_statsLock) return _newTendersFoundLastRun; }
-    }
-
-    public DateTime LastRunTimeUtc
-    {
-        get { lock (_statsLock) return _lastRunTimeUtc; }
-    }
-
-    public bool IsErrorLastRun
-    {
-        get { lock (_statsLock) return _isErrorLastRun; }
-    }
-
-    // Constructor
-    public TenderMonitorBackgroundService(
-    IServiceScopeFactory scopeFactory,
-    ILogger<TenderMonitorBackgroundService> logger,
-    MonitorSettings settings)
-    {
-        _scopeFactory = scopeFactory;
-        _logger = logger;
-        _settings = settings;
-    }
-   
-    // Public Methods
-
-    public void ResetDelay()
-    {
-        lock (_delayLock)
-        {
-            _delayCts?.Cancel();
-        }
-    }
-
-    public async Task RunManualAsync()
-    {
-        await FetchAndSaveAsync(CancellationToken.None);
-    }
-
-    // Protected/Override
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        // Первый опрос сразу при старте
-        await FetchAndSaveAsync(stoppingToken);
-
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            int interval = _settings.PollIntervalMinutes;
-            CancellationTokenSource delayCts;
-
-            lock (_delayLock)
-            {
-                // Создаём новый токен для текущего цикла ожидания
-                delayCts = _delayCts = new CancellationTokenSource();
-            }
-
-            try
-            {
-                // Ждём указанный интервал. Прервётся, если вызвать ResetDelay()
-                await Task.Delay(TimeSpan.FromMinutes(interval), delayCts.Token);
-            }
-            catch (OperationCanceledException)
-            {
-                // Ожидание прервано (смена интервала или остановка приложения)
-            }
-
-            // Если приложение останавливается — выходим из цикла
-            if (stoppingToken.IsCancellationRequested) break;
-
-            // Выполняем опрос
-            await FetchAndSaveAsync(stoppingToken);
-        }
-    }
-    private async Task FetchAndSaveAsync(CancellationToken token)
-    {
-        using IServiceScope scope = _scopeFactory.CreateScope();
-        TenderMonitorDbContext db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
-
-        try
-        {
-            // Считаем опрос (потокобезопасно)
-            lock (_statsLock)
-            {
-                _totalPollsCount++;
-            }
-
-            // Создаём клиент с заголовками (как в Tenders.razor)
-            using HttpClientHandler handler = new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            };
-            using HttpClient client = new HttpClient(handler);
-            client.Timeout = TimeSpan.FromMinutes(_settings.HttpClientTimeoutMinutes);
-            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-            client.DefaultRequestHeaders.Add("Accept", "application/rss+xml, application/xml, text/xml, */*");
-
-            // 👇 Попытка запроса с повтором при ошибке
-            HttpResponseMessage? response = null;
-            int retryCount = 0;
-            const int maxRetries = 2;
-
-            while (retryCount <= maxRetries)
-            {
-                try
-                {
-                    response = await client.GetAsync(_settings.RssUrl, token);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        break;
-                    }
-                }
-                catch
-                {
-                    // Игнорируем и пробуем снова
-                }
-
-                retryCount++;
-                if (retryCount <= maxRetries)
-                {
-                    await Task.Delay(2000, token); // Ждём 2 секунды перед повтором
-                }
-            }
-
-            // Если все попытки исчерпаны
-            if (response == null || !response.IsSuccessStatusCode)
-            {
-                string status = response?.StatusCode.ToString() ?? "null";
-                throw new HttpRequestException($"Failed after {maxRetries} retries: {status}");
-            }
-
-            string xmlContent = await response.Content.ReadAsStringAsync(token);
-
-            // 👇 Проверка: если контент не похож на RSS — пропускаем этот цикл
-            if (!xmlContent.Contains("<channel>") || !xmlContent.Contains("<item>"))
-            {
-                _logger.LogWarning("RSS feed content does not look like valid XML. Skipping this cycle.");
-                UpdateStats(0, false);
-                return;
-            }
-
-            // Парсим XML
-            XDocument doc = XDocument.Parse(xmlContent);
-            XElement? channel = doc.Root?.Element("channel");
-
-            if (channel == null)
-            {
-                throw new InvalidOperationException("RSS channel not found in feed.");
-            }
-
-            List<TenderMonitorRecord> newRecords = new List<TenderMonitorRecord>();
-            int foundCount = 0;
-
-            foreach (XElement item in channel.Elements("item"))
-            {
-                string title = item.Element("title")?.Value ?? string.Empty;
-                string? link = item.Element("link")?.Value;
-                string? description = item.Element("description")?.Value;
-                DateTime? pubDate = null;
-                string? pubDateStr = item.Element("pubDate")?.Value;
-
-                if (!string.IsNullOrEmpty(pubDateStr) && DateTime.TryParse(pubDateStr, out DateTime parsedDate))
-                {
-                    pubDate = parsedDate;
-                }
-
-                if (string.IsNullOrEmpty(link))
-                {
-                    continue;
-                }
-
-                // Дедупликация: проверяем, есть ли запись в БД
-                bool exists = await db.Tenders.AnyAsync(t => t.Link == link, token);
-                if (!exists)
-                {
-                    TenderMonitorRecord record = new TenderMonitorRecord
-                    {
-                        Link = link,
-                        Title = title,
-                        Description = description,
-                        PubDate = pubDate
-                    };
-                    newRecords.Add(record);
-                    foundCount++;
-                }
-            }
-
-            // Сохраняем новые записи
-            if (foundCount > 0)
-            {
-                db.Tenders.AddRange(newRecords);
-                await db.SaveChangesAsync(token);
-                _logger.LogInformation("Saved {Count} new tenders to monitor DB.", foundCount);
-            }
-            else
-            {
-                _logger.LogInformation("No new tenders found in current RSS cycle.");
-            }
-
-            // Обновляем статистику (успех)
-            UpdateStats(foundCount, false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to fetch or process RSS feed.");
-            // Обновляем статистику (ошибка)
-            UpdateStats(0, true);
-        }
-    }
-    private void UpdateStats(int newCount, bool isError)
-    {
-        lock (_statsLock)
-        {
-            _newTendersFoundLastRun = newCount;
-            _lastRunTimeUtc = DateTime.UtcNow;
-            _isErrorLastRun = isError;
-        }
-    }
-}
 
 
 ### File: Services\Documents\EisDocumentService.cs ###
@@ -4709,17 +4311,9 @@ public class MonitorProfileManager : IDisposable
             return;
         }
 
-        // 🔹 старый поток (для обратной совместимости): только если заполнены RegionCode и LawType
-        if (string.IsNullOrWhiteSpace(profile.RegionCode) || string.IsNullOrWhiteSpace(profile.LawType))
-        {
-            _logger.LogWarning("⚠️ [{Name}] → пропущен (не настроен: нет SearchUrl и нет RegionCode/LawType)", profile.Name);
-            UpdateStat(profile.Id, error: "не настроен: нет SearchUrl или RegionCode/LawType");
-            return;
-        }
-
-        // старый rss-поток
-        _logger.LogInformation("📡 [{Name}] → rss-поток", profile.Name);
-        await PollProfileWithRssAsync(profile, token);
+        // если нет SearchUrl — профиль не настроен
+        _logger.LogWarning("⚠️ [{Name}] пропущен: нет SearchUrl", profile.Name);
+        UpdateStat(profile.Id, error: "не настроен: пустой SearchUrl");
     }
 
     private async Task PollProfileWithBrowserAsync(MonitorProfile profile, CancellationToken token)
@@ -4894,38 +4488,6 @@ public class MonitorProfileManager : IDisposable
         }
 
         return regNumbers;
-    }
-
-    private async Task PollProfileWithRssAsync(MonitorProfile profile, CancellationToken token)
-    {
-        var today = DateTime.Today.ToString("yyyy-MM-dd");
-        var url = $"https://zakupki.gov.ru/epz/order/extendedsearch/rss.html?" +
-                  $"lawTypes={Uri.EscapeDataString(profile.LawType ?? string.Empty)}&" +
-                  $"regions={Uri.EscapeDataString(profile.RegionCode ?? string.Empty)}&" +
-                  $"publishDateFrom={today}&" +
-                  $"publishDateTo={today}&" +
-                  $"sortBy=PUBLISH_DATE&" +
-                  $"sortOrder=DESC&" +
-                  $"page=1";
-
-        _logger.LogInformation("📡 [{ProfileName}] rss-запрос: {Url}", profile.Name, url);
-
-        var client = _eisService.HttpClient;
-        var response = await client.GetAsync(url, token);
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogWarning("⚠️ [{ProfileName}] rss ошибка: статус {StatusCode}", profile.Name, response.StatusCode);
-            UpdateStat(profile.Id, error: $"http {response.StatusCode}");
-            return;
-        }
-
-        var xml = await response.Content.ReadAsStringAsync(token);
-        var doc = XDocument.Parse(xml);
-        var items = doc.Descendants("item").ToList();
-
-        _logger.LogDebug("🔍 [{ProfileName}] rss вернул {Count} элементов", profile.Name, items.Count);
-
-        UpdateStat(profile.Id, lastRunAt: DateTime.UtcNow, foundCount: items.Count);
     }
 
     private static string[] GetRegionNames(string regionCode) => regionCode switch
