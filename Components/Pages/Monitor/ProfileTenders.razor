@@ -4,13 +4,13 @@
 @using System.Linq
 @using QwenWeb.Data
 @using QwenWeb.Models
-
 @inject TenderMonitorDbContext Db
 @inject NavigationManager Navigation
+@inject Microsoft.Extensions.Logging.ILogger<ProfileTenders> Logger
 
 <h3>🔍 Закупки профиля: @profileName</h3>
 
-<!-- Фильтры и пагинация -->
+<!-- 🔹 Фильтры и пагинация (без кнопок обогащения) -->
 <div class="card mb-3">
     <div class="card-body py-2">
         <div class="row g-2 align-items-center">
@@ -48,8 +48,8 @@ else if (items.Count == 0)
 {
     <div class="alert alert-info">
         @(string.IsNullOrEmpty(searchQuery)
-            ? "По этому профилю пока нет сохранённых закупок."
-            : "Ничего не найдено по вашему запросу.")
+          ? "По этому профилю пока нет сохранённых закупок."
+          : "Ничего не найдено по вашему запросу.")
     </div>
 }
 else
@@ -57,6 +57,7 @@ else
     <div class="list-group">
         @foreach (var item in items)
         {
+            <!-- 🔹 Карточка без кнопок обогащения -->
             <QwenWeb.Components.TenderCard Item="item" />
         }
     </div>
@@ -90,7 +91,6 @@ else
 
 @code {
     [Parameter] public int ProfileId { get; set; }
-
     private string profileName = "Загрузка...";
     private List<TenderDisplayItem> items = new();
     private bool isLoading = true;
@@ -118,44 +118,44 @@ else
     {
         isLoading = true;
         StateHasChanged();
-
         try
         {
-            var query = Db.Tenders
-                .Where(t => t.ProfileId == ProfileId)
-                .AsQueryable();
+            var query = Db.Tenders.Where(t => t.ProfileId == ProfileId).AsQueryable();
 
-            // Поиск по названию/описанию
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 var q = searchQuery.ToLower();
                 query = query.Where(t =>
-                    (t.Title != null && t.Title.ToLower().Contains(q)) ||
-                    (t.Description != null && t.Description.ToLower().Contains(q)));
+                  (t.Title != null && t.Title.ToLower().Contains(q)) ||
+                  (t.CustomerName != null && t.CustomerName.ToLower().Contains(q)));
             }
 
             totalCount = await query.CountAsync();
-
             if (currentPage > totalPages) currentPage = Math.Max(1, totalPages);
 
             var records = await query
-                .OrderByDescending(t => t.PubDate)
-                .ThenByDescending(t => t.CreatedAtUtc)
-                .Skip((currentPage - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+              .OrderByDescending(t => t.PubDate)
+              .ThenByDescending(t => t.CreatedAtUtc)
+              .Skip((currentPage - 1) * pageSize)
+              .Take(pageSize)
+              .ToListAsync();
 
             items = records.Select(r => new TenderDisplayItem
             {
                 Record = r,
-                ParsedInfo = r.Description != null
-                    ? QwenWeb.Services.Parsing.TenderInfoParser.Parse(r.Description)
-                    : null
+                ParsedInfo = new ParsedTenderInfo
+                {
+                    ObjectName = r.Title,
+                    Customer = r.CustomerName,
+                    InitialPrice = r.InitialPrice,
+                    LawType = r.LawType,
+                    PublishDate = r.PubDate
+                }
             }).ToList();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] LoadTendersAsync: {ex.Message}");
+            Logger.LogWarning(ex, "⚠️ Ошибка загрузки закупок");
             items = new();
         }
         finally
@@ -171,7 +171,4 @@ else
         currentPage = page;
         _ = LoadTendersAsync();
     }
-
-    // 🔹 убран OnParametersSetAsync — чтобы не было перезагрузок при вводе поиска
-    // поиск работает через @bind:event="oninput" + StateHasChanged в LoadTendersAsync
 }

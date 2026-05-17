@@ -544,11 +544,12 @@ using QwenWeb.Data;
 using QwenWeb.Models;
 using QwenWeb.Services.Monitoring;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🧪 Тестовый модуль мониторинга закупок (RSS) — ЕИС
+// 🧪 Тестовый модуль мониторинга закупок — ЕИС
 MonitorSettings monitorSettings = new MonitorSettings();
 builder.Configuration.GetSection("MonitorSettings").Bind(monitorSettings);
 builder.Services.AddSingleton<MonitorSettings>(monitorSettings);
@@ -556,7 +557,7 @@ builder.Services.AddSingleton<MonitorSettings>(monitorSettings);
 builder.Services.AddHttpClient();
 
 builder.Services.AddDbContext<TenderMonitorDbContext>(options =>
-    options.UseSqlite(builder.Configuration["MonitorSettings:DbPath"] ?? "Data Source=monitor_test.db"));
+    options.UseSqlite(builder.Configuration ["MonitorSettings:DbPath"] ?? "Data Source=monitor_test.db"));
 
 // ✅ Razor Components + Interactive Server
 builder.Services.AddRazorComponents()
@@ -571,53 +572,87 @@ builder.Services.AddSingleton<MonitorProfileManager>();
 // 🔹 Асинхронный Main для поддержки await
 var app = builder.Build();
 
-// 🔹 Инициализация БД + Seed тестовых данных + Запуск менеджера
+// 🔹 Инициализация БД + Seed + Деактивация профилей при старте + Запуск менеджера
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
     // Seed: добавляем тестовый профиль, если таблица пуста
-    if (!db.MonitorProfiles.Any())
+    if (!await db.MonitorProfiles.AnyAsync())
     {
         db.MonitorProfiles.Add(new MonitorProfile
         {
             Name = "Тест: Иркутская область, 44-ФЗ",
-            IsActive = true,
+            IsActive = true,  // Seed-профиль активен, но будет деактивирован ниже
             RegionCode = "38000000000",
             LawType = "44",
             PollIntervalMinutes = 5
         });
         await db.SaveChangesAsync();
+        logger.LogInformation("🌱 Seed: добавлен тестовый профиль мониторинга");
+    }
+
+    // 🔹 НОВОЕ: При запуске приложения все профили деактивируются для безопасности
+    // Пользователь должен явно запустить профили через дашборд
+    var activeProfiles = await db.MonitorProfiles
+        .Where(p => p.IsActive)
+        .ToListAsync();
+
+    if (activeProfiles.Count > 0)
+    {
+        foreach (var profile in activeProfiles)
+        {
+            profile.IsActive = false;
+            profile.UpdatedAt = DateTime.UtcNow;
+        }
+        await db.SaveChangesAsync();
+        logger.LogInformation("🔒 Деактивировано {Count} профилей при запуске (требуют ручного старта)", activeProfiles.Count);
     }
 
     // 🔹 Запускаем MonitorProfileManager
     var manager = scope.ServiceProvider.GetRequiredService<MonitorProfileManager>();
     manager.Start();
+    logger.LogInformation("🔄 MonitorProfileManager запущен");
 }
 
 app.UseStaticFiles();
 app.UseAntiforgery();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
-// 🔹 временный тест: сбор regnumber через браузер (только иркутская область)
-// удалить после проверки
+// 🔹 Временный тест: сбор regnumber через браузер (только иркутская область)
+// Удалить после проверки
 try
 {
-   //await QwenWeb.Services.Monitoring.BrowserScraperTest.RunAsync();
+    // await QwenWeb.Services.Monitoring.BrowserScraperTest.RunAsync();
 }
 catch (Exception ex)
 {
     Console.WriteLine($"[TEST ERROR] BrowserScraperTest: {ex.Message}");
 }
 
+// 🔹 Отладочный вывод профиля #6 (безопасная версия)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
     var profile = await db.MonitorProfiles.FindAsync(6);
+
     Console.WriteLine($"[DEBUG] Profile #6 SearchUrl length: {profile?.SearchUrl?.Length ?? 0}");
-    Console.WriteLine($"[DEBUG] Preview: {profile?.SearchUrl?.Substring(0, Math.Min(500, profile.SearchUrl.Length))}");
-    Console.WriteLine($"[DEBUG] Contains customerPlace: {profile?.SearchUrl?.Contains("customerPlace")}");
+
+    if (!string.IsNullOrEmpty(profile?.SearchUrl))
+    {
+        var preview = profile.SearchUrl.Length > 500
+            ? profile.SearchUrl.Substring(0, 500) + "..."
+            : profile.SearchUrl;
+        Console.WriteLine($"[DEBUG] Preview: {preview}");
+        Console.WriteLine($"[DEBUG] Contains customerPlace: {profile.SearchUrl.Contains("customerPlace")}");
+    }
+    else
+    {
+        Console.WriteLine("[DEBUG] Profile #6: SearchUrl is null or empty");
+    }
 }
+
 // 🔹 Асинхронный запуск приложения
 await app.RunAsync();
 
@@ -652,7 +687,7 @@ project_context.txt посдежней версии, в нем будут соб
 • Отмена операций: все async-методы принимают CancellationToken и корректно обрабатывают OperationCanceledException.
 
 🔹 ДОМЕН И МОНЕТИЗАЦИЯ:
-• Фокус: CRM для поставщиков госзакупок (ЕИС, парсинг через браузер хромиум, извлечение документов, AI-аналитика рисков/маржинальности, подготовка КП). Парсинг через RSS себя не опровдал, ветку RSS парчинга не развиваем !!!
+• Фокус: CRM для поставщиков госзакупок (ЕИС, парсинг через браузер хромиум, извлечение документов, AI-аналитика рисков/маржинальности, подготовка КП). Парсинг через RSS себя не опровдал, ветку RSS парcинга не развиваем !!!
 • При каждой новой фиче предлагать 1-2 варианта монетизации (Freemium/Pro/Enterprise, API, уведомления, отчёты, командный доступ), но внедрять только после согласования и оценки ROI.
 set-executionpolicy -scope process -executionpolicy bypass -force
 .\collect.ps1
@@ -2521,6 +2556,7 @@ else
 @using QwenWeb.Data
 @using QwenWeb.Models
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.EntityFrameworkCore
 
 @inject TenderMonitorDbContext Db
 @inject NavigationManager Navigation
@@ -2537,7 +2573,8 @@ else
     </ol>
 </div>
 
-<EditForm Model="Profile" OnValidSubmit="HandleSubmitAsync" class="mt-4">
+<!-- 🔹 OnSubmit для ручной валидации -->
+<EditForm Model="Profile" OnSubmit="HandleSubmitAsync" class="mt-4">
     <DataAnnotationsValidator />
     <ValidationSummary class="alert alert-danger" />
 
@@ -2552,19 +2589,43 @@ else
         <!-- Ссылка поиска ЕИС -->
         <div class="col-12">
             <label class="form-label">Ссылка поиска из ЕИС</label>
-            <InputText @bind-Value="Profile.SearchUrl" class="form-control" placeholder="https://zakupki.gov.ru/epz/order/extendedsearch/results.html?..." />
-            <ValidationMessage For="@(() => Profile.SearchUrl)" class="text-danger small" />
+            <InputText @bind-Value="Profile.SearchUrl"
+                       class="form-control"
+                       placeholder="https://zakupki.gov.ru/epz/order/extendedsearch/results.html?..." />
+            <ValidationMessage For="@(() => Profile.SearchUrl)"
+                               class="text-danger small d-block mt-1" />
             <div class="form-text">
                 ссылка должна содержать <code>results.html</code> и параметр <code>publishDateFrom</code>.
                 дата будет автоматически заменяться на текущую при каждом запуске.
             </div>
         </div>
 
-        <!-- Интервал опроса (опционально) -->
+        <!-- Интервал опроса -->
         <div class="col-md-3">
             <label class="form-label">Интервал (мин)</label>
             <InputNumber @bind-Value="Profile.PollIntervalMinutes" class="form-control" min="60" max="1440" />
             <ValidationMessage For="@(() => Profile.PollIntervalMinutes)" class="text-danger small" />
+        </div>
+
+        <!-- 🔹 НОВОЕ: Режим подстановки даты -->
+        <div class="col-md-3">
+            <label class="form-label">Режим даты</label>
+            <div class="form-check mt-2">
+                <InputCheckbox @bind-Value="Profile.UseCustomDate"
+                               class="form-check-input"
+                               @onchange="StateHasChanged" />
+                <label class="form-check-label">Своя дата</label>
+            </div>
+        </div>
+
+        <!-- 🔹 НОВОЕ: Пользовательская дата (с надёжным disabled) -->
+        <div class="col-md-3">
+            <label class="form-label">Дата поиска</label>
+            <InputDate @bind-Value="Profile.CustomDate"
+                       class="form-control"
+                       @attributes="GetDateInputAttributes()"
+                       @key="Profile.UseCustomDate" />
+            <ValidationMessage For="@(() => Profile.CustomDate)" class="text-danger small" />
         </div>
 
         <!-- Активность -->
@@ -2576,6 +2637,7 @@ else
         </div>
     </div>
 
+    <!-- 🔹 Кнопки — вне row, но внутри EditForm -->
     <div class="mt-4 d-flex gap-2">
         <button type="submit" class="btn btn-primary" disabled="@isSaving">
             @if (isSaving)
@@ -2589,6 +2651,8 @@ else
 </EditForm>
 
 @code {
+    [CascadingParameter] private EditContext? CurrentEditContext { get; set; }
+
     [SupplyParameterFromQuery]
     [Parameter]
     public int? ProfileId { get; set; }
@@ -2598,43 +2662,68 @@ else
     private MonitorProfile Profile = new();
     private bool isSaving;
 
+    // 🔹 Хелпер: возвращает атрибуты для поля даты
+    private IReadOnlyDictionary<string, object> GetDateInputAttributes()
+    {
+        return new Dictionary<string, object>
+        {
+            { "disabled", !Profile.UseCustomDate }
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         if (IsEdit && ProfileId.HasValue)
         {
-            var profile = await Db.MonitorProfiles.FindAsync(ProfileId.Value);
+            // 🔹 AsNoTracking: загружаем как DTO, чтобы избежать конфликта трекинга
+            var profile = await Db.MonitorProfiles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == ProfileId.Value);
+
             if (profile == null)
             {
                 Navigation.NavigateTo("/monitor/dashboard", replace: true);
                 return;
             }
-            Profile = new MonitorProfile
-            {
-                Id = profile.Id,
-                Name = profile.Name,
-                SearchUrl = profile.SearchUrl,
-                RegionCode = profile.RegionCode,
-                LawType = profile.LawType,
-                IsActive = profile.IsActive,
-                PollIntervalMinutes = profile.PollIntervalMinutes,
-                CreatedAt = profile.CreatedAt,
-                UpdatedAt = profile.UpdatedAt
-            };
+            Profile = profile;
         }
         else
         {
-            Profile.IsActive = true;
-            Profile.PollIntervalMinutes = 1440; // раз в сутки по умолчанию
+            Profile = new MonitorProfile
+            {
+                IsActive = true,
+                PollIntervalMinutes = 1440,
+                // 🔹 Явная инициализация новых полей
+                UseCustomDate = false,
+                CustomDate = null
+            };
         }
     }
 
     private async Task HandleSubmitAsync()
     {
-        // 🔹 валидация ссылки
-        if (!Profile.SearchUrl.Contains("results.html", StringComparison.OrdinalIgnoreCase) ||
+        // 🔹 Стандартная валидация DataAnnotations
+        if (CurrentEditContext != null && !CurrentEditContext.Validate())
+        {
+            Console.WriteLine("[ERROR] Стандартная валидация не пройдена");
+            return;
+        }
+
+        // 🔹 Валидация SearchUrl
+        if (string.IsNullOrWhiteSpace(Profile.SearchUrl) ||
+            !Profile.SearchUrl.Contains("results.html", StringComparison.OrdinalIgnoreCase) ||
             !Profile.SearchUrl.Contains("publishDateFrom", StringComparison.OrdinalIgnoreCase))
         {
+            CurrentEditContext?.NotifyFieldChanged(new FieldIdentifier(Profile, nameof(Profile.SearchUrl)));
             Console.WriteLine("[ERROR] некорректная ссылка: должна содержать results.html и publishDateFrom");
+            return;
+        }
+
+        // 🔹 Валидация: если режим ручной даты → дата обязательна
+        if (Profile.UseCustomDate && !Profile.CustomDate.HasValue)
+        {
+            CurrentEditContext?.NotifyFieldChanged(new FieldIdentifier(Profile, nameof(Profile.CustomDate)));
+            Console.WriteLine("[ERROR] включён режим ручной даты, но дата не выбрана");
             return;
         }
 
@@ -2645,11 +2734,16 @@ else
             if (!IsEdit)
             {
                 Profile.CreatedAt = DateTime.UtcNow;
-                Db.MonitorProfiles.Add(Profile);
+                await Db.MonitorProfiles.AddAsync(Profile);
             }
             else
             {
-                Db.MonitorProfiles.Update(Profile);
+                // 🔹 Безопасное обновление: избегаем конфликта трекинга EF Core
+                var tracked = await Db.MonitorProfiles.FindAsync(Profile.Id);
+                if (tracked != null)
+                {
+                    Db.Entry(tracked).CurrentValues.SetValues(Profile);
+                }
             }
             await Db.SaveChangesAsync();
             Navigation.NavigateTo("/monitor/dashboard");
@@ -2980,6 +3074,18 @@ public class MonitorProfile
     public string? LawType { get; set; }
 
     public int PollIntervalMinutes { get; set; } = 1440; // по умолчанию раз в сутки
+
+    // 🔹 НОВОЕ: режим подстановки даты
+    /// <summary>
+    /// Если true — используется CustomDate, иначе — DateTime.Today
+    /// </summary>
+    public bool UseCustomDate { get; set; } = false;
+
+    /// <summary>
+    /// Пользовательская дата для подстановки в SearchUrl (если UseCustomDate = true)
+    /// </summary>
+    public DateTime? CustomDate { get; set; }
+
 
     public DateTime? LastRunAt { get; set; }
     public int LastFoundCount { get; set; }
@@ -4143,7 +4249,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace QwenWeb.Services.Monitoring;
 
@@ -4208,7 +4313,7 @@ public class MonitorProfileManager : IDisposable
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
 
-        var profile = await db.MonitorProfiles.FindAsync(new object[] { profileId }, ct);
+        var profile = await db.MonitorProfiles.FindAsync(new object [] { profileId }, ct);
         if (profile == null) throw new InvalidOperationException($"Профиль {profileId} не найден");
 
         profile.IsActive = activate;
@@ -4223,7 +4328,7 @@ public class MonitorProfileManager : IDisposable
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
 
-        var profile = await db.MonitorProfiles.FindAsync(new object[] { profileId }, ct);
+        var profile = await db.MonitorProfiles.FindAsync(new object [] { profileId }, ct);
         if (profile == null) throw new InvalidOperationException($"Профиль {profileId} не найден");
 
         db.MonitorProfiles.Remove(profile);
@@ -4243,7 +4348,6 @@ public class MonitorProfileManager : IDisposable
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
 
-                // 🔹 лог: загрузка профилей
                 _logger.LogDebug("🔄 загрузка активных профилей из бд...");
                 activeProfiles = await db.MonitorProfiles
                     .Where(p => p.IsActive)
@@ -4295,7 +4399,22 @@ public class MonitorProfileManager : IDisposable
 
     private async Task PollProfileAsync(MonitorProfile profile, CancellationToken token)
     {
-        // 🔹 лог: детали профиля перед маршрутизацией
+        // 🔹 НОВОЕ: проверка интервала опроса
+        if (profile.LastRunAt.HasValue)
+        {
+            var elapsed = DateTime.UtcNow - profile.LastRunAt.Value;
+            var interval = TimeSpan.FromMinutes(profile.PollIntervalMinutes);
+
+            if (elapsed < interval)
+            {
+                var remaining = interval - elapsed;
+                _logger.LogDebug("⏳ [{Name}] пропущен: до следующего опроса осталось {Remaining}",
+                    profile.Name, remaining.ToString(@"hh\:mm\:ss"));
+                return; // ← не запускаем скрапер, ждём следующего цикла
+            }
+        }
+
+        // 🔹 Исправлено: полная лог-строка с параметрами
         _logger.LogDebug("📋 профиль #{Id} («{Name}»): SearchUrl длина={Len}, RegionCode={Region}, LawType={Law}, IsActive={Active}",
             profile.Id, profile.Name,
             profile.SearchUrl?.Length ?? 0,
@@ -4303,7 +4422,6 @@ public class MonitorProfileManager : IDisposable
             profile.LawType ?? "null",
             profile.IsActive);
 
-        // 🔹 новый поток: если задан SearchUrl — используем браузерный скрапер
         if (!string.IsNullOrWhiteSpace(profile.SearchUrl))
         {
             _logger.LogInformation("🌐 [{Name}] → браузерный скрапер", profile.Name);
@@ -4311,7 +4429,6 @@ public class MonitorProfileManager : IDisposable
             return;
         }
 
-        // если нет SearchUrl — профиль не настроен
         _logger.LogWarning("⚠️ [{Name}] пропущен: нет SearchUrl", profile.Name);
         UpdateStat(profile.Id, error: "не настроен: пустой SearchUrl");
     }
@@ -4322,11 +4439,15 @@ public class MonitorProfileManager : IDisposable
 
         try
         {
-            var today = DateTime.Today.ToString("dd.MM.yyyy");
-            var searchUrl = ReplaceDateInUrl(profile.SearchUrl, today);
+            // 🔹 Определяем целевую дату: если UseCustomDate=true и дата задана — используем её
+            string targetDate = profile.UseCustomDate && profile.CustomDate.HasValue
+                ? profile.CustomDate.Value.ToString("dd.MM.yyyy")
+                : DateTime.Today.ToString("dd.MM.yyyy");
+
+            var searchUrl = ReplaceDateInUrl(profile.SearchUrl, targetDate);
             _logger.LogDebug("🔗 [{ProfileName}] обновлённая ссылка: {Url}", profile.Name, searchUrl);
 
-            var regNumbers = await ScrapeRegNumbersAsync(profile, token);
+            var regNumbers = await ScrapeRegNumbersAsync(profile, searchUrl, token);
             _logger.LogInformation("✅ [{ProfileName}] найдено regNumber: {Count}", profile.Name, regNumbers.Count);
 
             using var scope = _scopeFactory.CreateScope();
@@ -4366,38 +4487,61 @@ public class MonitorProfileManager : IDisposable
                 _logger.LogInformation("ℹ️ [{ProfileName}] новых записей не найдено (все дубли или пусто)", profile.Name);
             }
 
+            // 🔹 ИСПРАВЛЕНО: сохраняем LastRunAt и LastFoundCount в БД для работы интервала опроса
+            var trackedProfile = await db.MonitorProfiles.FindAsync(new object [] { profile.Id }, token);
+            if (trackedProfile != null)
+            {
+                trackedProfile.LastRunAt = DateTime.UtcNow;
+                trackedProfile.LastFoundCount = newCount;
+                trackedProfile.LastError = null;
+                trackedProfile.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(token);
+                _logger.LogDebug("💾 [{Name}] сохранён LastRunAt={LastRunAt}, LastFoundCount={Count}",
+                    profile.Name, trackedProfile.LastRunAt, newCount);
+            }
+
             UpdateStat(profile.Id, lastRunAt: DateTime.UtcNow, foundCount: newCount);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "💥 [{ProfileName}] ошибка в браузерном скрапере", profile.Name);
             UpdateStat(profile.Id, error: ex.Message);
+
+            // 🔹 Также сохраняем ошибку в БД
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TenderMonitorDbContext>();
+            var trackedProfile = await db.MonitorProfiles.FindAsync(new object [] { profile.Id }, token);
+            if (trackedProfile != null)
+            {
+                trackedProfile.LastError = ex.Message;
+                trackedProfile.UpdatedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(token);
+            }
         }
     }
 
-    private static string ReplaceDateInUrl(string url, string newDate)
+    // 🔹 Исправлено: метод теперь принимает targetDate, а не вычисляет её внутри
+    private static string ReplaceDateInUrl(string url, string targetDate)
     {
         if (string.IsNullOrWhiteSpace(url)) return url;
 
         var regexFrom = new Regex(@"publishDateFrom=\d{2}\.\d{2}\.\d{4}", RegexOptions.IgnoreCase);
-        url = regexFrom.Replace(url, $"publishDateFrom={newDate}");
+        url = regexFrom.Replace(url, $"publishDateFrom={targetDate}");
 
         var regexTo = new Regex(@"publishDateTo=\d{2}\.\d{2}\.\d{4}", RegexOptions.IgnoreCase);
-        url = regexTo.Replace(url, $"publishDateTo={newDate}");
+        url = regexTo.Replace(url, $"publishDateTo={targetDate}");
 
         return url;
     }
 
-    private async Task<HashSet<string>> ScrapeRegNumbersAsync(MonitorProfile profile, CancellationToken token)
+    // 🔹 Исправлено: метод принимает baseUrl как параметр, а не вычисляет его внутри
+    private async Task<HashSet<string>> ScrapeRegNumbersAsync(MonitorProfile profile, string baseUrl, CancellationToken token)
     {
         var regNumbers = new HashSet<string>();
         int maxPages = 3;
         int currentPage = 1;
 
-        var today = DateTime.Today.ToString("dd.MM.yyyy");
-        var baseUrl = ReplaceDateInUrl(profile.SearchUrl, today);
-
-        // 🔹 лог: исходная ссылка перед скрапингом
+        // 🔹 Лог: исходная ссылка перед скрапингом
         var preview = baseUrl.Length > 300 ? baseUrl.Substring(0, 300) + "..." : baseUrl;
         _logger.LogInformation("🔍 [{Name}] исходная ссылка (длина {Len}): {Preview}",
             profile.Name, baseUrl.Length, preview);
@@ -4407,7 +4551,7 @@ public class MonitorProfileManager : IDisposable
         await using var browser = await playwright.Chromium.LaunchAsync(new()
         {
             Headless = false,
-            Args = new[] {
+            Args = new [] {
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
@@ -4466,7 +4610,7 @@ public class MonitorProfileManager : IDisposable
                     if (string.IsNullOrEmpty(href)) continue;
 
                     var match = Regex.Match(href, @"regNumber=([0-9A-Za-z\-_]+)");
-                    if (match.Success) regNumbers.Add(match.Groups[1].Value);
+                    if (match.Success) regNumbers.Add(match.Groups [1].Value);
                 }
 
                 _logger.LogDebug("✅ [{Name}] собрано regnumber на стр. {Page}: {Count}", profile.Name, currentPage, links.Count());
@@ -4490,21 +4634,21 @@ public class MonitorProfileManager : IDisposable
         return regNumbers;
     }
 
-    private static string[] GetRegionNames(string regionCode) => regionCode switch
+    private static string [] GetRegionNames(string regionCode) => regionCode switch
     {
-        "38000000000" => new[] { "Иркутская область", "Иркутской области", "Иркутская обл.", "г. Иркутск" },
-        "24000000000" => new[] { "Красноярский край", "Красноярского края", "г. Красноярск" },
-        "54000000000" => new[] { "Новосибирская область", "Новосибирской области", "г. Новосибирск" },
-        "27000000000" => new[] { "Хабаровский край", "Хабаровского края", "г. Хабаровск" },
-        "28000000000" => new[] { "Амурская область", "Амурской области", "г. Благовещенск" },
-        "75000000000" => new[] { "Забайкальский край", "Забайкальского края", "г. Чита" },
-        "79000000000" => new[] { "Еврейская автономная область", "ЕАО", "г. Биробиджан" },
-        "87000000000" => new[] { "Чукотский автономный округ", "Чукотка", "г. Анадырь" },
-        "41000000000" => new[] { "Камчатский край", "Камчатки", "г. Петропавловск-Камчатский" },
-        "65000000000" => new[] { "Сахалинская область", "Сахалина", "г. Южно-Сахалинск" },
-        "03000000000" => new[] { "Республика Бурятия", "Бурятия", "г. Улан-Удэ" },
-        "25000000000" => new[] { "Приморский край", "Приморья", "г. Владивосток" },
-        _ => new[] { regionCode }
+        "38000000000" => new [] { "Иркутская область", "Иркутской области", "Иркутская обл.", "г. Иркутск" },
+        "24000000000" => new [] { "Красноярский край", "Красноярского края", "г. Красноярск" },
+        "54000000000" => new [] { "Новосибирская область", "Новосибирской области", "г. Новосибирск" },
+        "27000000000" => new [] { "Хабаровский край", "Хабаровского края", "г. Хабаровск" },
+        "28000000000" => new [] { "Амурская область", "Амурской области", "г. Благовещенск" },
+        "75000000000" => new [] { "Забайкальский край", "Забайкальского края", "г. Чита" },
+        "79000000000" => new [] { "Еврейская автономная область", "ЕАО", "г. Биробиджан" },
+        "87000000000" => new [] { "Чукотский автономный округ", "Чукотка", "г. Анадырь" },
+        "41000000000" => new [] { "Камчатский край", "Камчатки", "г. Петропавловск-Камчатский" },
+        "65000000000" => new [] { "Сахалинская область", "Сахалина", "г. Южно-Сахалинск" },
+        "03000000000" => new [] { "Республика Бурятия", "Бурятия", "г. Улан-Удэ" },
+        "25000000000" => new [] { "Приморский край", "Приморья", "г. Владивосток" },
+        _ => new [] { regionCode }
     };
 
     private void UpdateStat(int profileId, DateTime? lastRunAt = null, int? foundCount = null, string? error = null)
@@ -4514,7 +4658,7 @@ public class MonitorProfileManager : IDisposable
             if (!_stats.TryGetValue(profileId, out var stats))
                 stats = new ProfileStats(true, null, 0, null);
 
-            _stats[profileId] = stats with
+            _stats [profileId] = stats with
             {
                 LastRunAt = lastRunAt ?? stats.LastRunAt,
                 LastFoundCount = foundCount ?? stats.LastFoundCount,
@@ -4529,7 +4673,7 @@ public class MonitorProfileManager : IDisposable
         {
             var keys = _stats.Keys.ToList();
             foreach (var k in keys)
-                _stats[k] = _stats[k] with { IsActive = isActive };
+                _stats [k] = _stats [k] with { IsActive = isActive };
         }
     }
 

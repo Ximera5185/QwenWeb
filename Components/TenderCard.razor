@@ -8,17 +8,16 @@
 <div class="card mb-3 shadow-sm tender-card" @onclick="OpenDetails" style="cursor: pointer;">
     <div class="card-body p-3">
         <div class="d-flex justify-content-between align-items-start mb-2">
-            <h6 class="card-title mb-0 fw-bold text-truncate tender-card-title" style="max-width: 70%;">
-                @* 🔹 безопасное получение названия *@
-                @(Item?.ParsedInfo?.ObjectName ?? Item?.Record?.Title ?? "Без названия")
+            <h6 class="card-title mb-0 fw-bold text-truncate tender-card-title" style="max-width: 65%;">
+                @(Item?.Record?.Title ?? "Без названия")
             </h6>
             <div class="d-flex gap-2 flex-shrink-0">
-                @* 🔹 закон (если есть) *@
-                @if (!string.IsNullOrEmpty(Item?.ParsedInfo?.LawType))
+                <!-- 🔹 Закон (например, 44-ФЗ) -->
+                @if (!string.IsNullOrEmpty(Item?.Record?.LawType))
                 {
-                    <span class="badge bg-primary">@Item.ParsedInfo.LawType</span>
+                    <span class="badge bg-primary">@Item.Record.LawType-ФЗ</span>
                 }
-                @* 🔹 цена из записи (не из ParsedInfo) *@
+                <!-- 🔹 Цена -->
                 @if (Item?.Record?.InitialPrice.HasValue == true)
                 {
                     <span class="badge bg-success">@(((decimal)Item.Record.InitialPrice).ToString("N0")) ₽</span>
@@ -27,42 +26,32 @@
         </div>
 
         <div class="text-muted small mb-2">
-            @* 🔹 только безопасные поля из Record *@
             @if (!string.IsNullOrEmpty(Item?.Record?.RegionCode))
             {
                 <span>📍 @Item.Record.RegionCode</span>
                 <span class="mx-1">•</span>
             }
-            @* заказчик пока не отображаем, пока не знаем точные свойства в ParsedInfo *@
+            @if (!string.IsNullOrEmpty(Item?.Record?.CustomerName))
+            {
+                <span>🏢 @Item.Record.CustomerName</span>
+            }
         </div>
 
         <div class="d-flex justify-content-between align-items-center">
             <small class="text-muted">
-                @* 🔹 дата публикации *@
                 @if (Item?.Record?.PubDate.HasValue == true)
                 {
                     <span>📅 @Item.Record.PubDate?.ToString("dd.MM.yyyy")</span>
                 }
-                @* 🔹 номер закупки *@
                 @if (!string.IsNullOrEmpty(Item?.Record?.RegNumber))
                 {
                     <span class="mx-2">•</span>
                     <code>@Item.Record.RegNumber</code>
                 }
             </small>
-            @* 🔹 статус обработки *@
-            @if (Item?.Record?.Status == "raw")
-            {
-                <span class="badge bg-warning text-dark">⏳ обработка</span>
-            }
-            else if (Item?.Record?.Status == "processed")
-            {
-                <span class="badge bg-success">✓ готово</span>
-            }
-            else if (Item?.Record?.Status == "error")
-            {
-                <span class="badge bg-danger">⚠ ошибка</span>
-            }
+
+            <!-- Статус теперь всегда "Готово", так как мы парсим сразу -->
+            <span class="badge bg-success">✓ готово</span>
         </div>
     </div>
 </div>
